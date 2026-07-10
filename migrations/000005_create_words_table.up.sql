@@ -1,0 +1,16 @@
+CREATE TABLE words (
+    id BIGSERIAL PRIMARY KEY,
+
+    hanzi VARCHAR(100) NOT NULL,
+
+    pinyin VARCHAR(255) NOT NULL,
+
+    translation VARCHAR(255) NOT NULL,
+
+    part_of_speech VARCHAR(50),
+
+    hsk_level SMALLINT NOT NULL,
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

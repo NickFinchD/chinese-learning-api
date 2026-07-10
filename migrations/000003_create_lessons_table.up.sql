@@ -1,0 +1,13 @@
+CREATE TABLE lessons (
+    id BIGSERIAL PRIMARY KEY,
+
+    course_id BIGINT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+
+    lesson_number INT NOT NULL,
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

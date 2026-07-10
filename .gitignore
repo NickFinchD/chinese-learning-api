@@ -1,0 +1,10 @@
+.env
+
+tmp/
+bin/
+
+.idea/
+.vscode/settings.json
+
+*.exe
+*.out

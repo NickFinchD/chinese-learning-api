@@ -1,0 +1,13 @@
+CREATE TABLE courses (
+    id BIGSERIAL PRIMARY KEY,
+
+    title VARCHAR(100) NOT NULL,
+    description TEXT,
+
+    hsk_level SMALLINT NOT NULL,
+
+    sort_order INT NOT NULL DEFAULT 0,
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
