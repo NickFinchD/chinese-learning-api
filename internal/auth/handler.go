@@ -3,6 +3,7 @@ package auth
 import (
 	"net/http"
 
+	"github.com/NickFinchD/chinese-learning-api/internal/response"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,9 +22,7 @@ func (h *Handler) Register(c *gin.Context) {
 
 	if err := c.ShouldBindJSON(&request); err != nil {
 
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": err.Error(),
-		})
+		response.BadRequest(c, err.Error())
 
 		return
 	}
@@ -39,12 +38,51 @@ func (h *Handler) Register(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"success": true,
-		"data": gin.H{
-			"id":       user.ID,
-			"username": user.Username,
-			"email":    user.Email,
+	response.JSON(c, http.StatusCreated, RegisterResponse{
+		ID:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
+	})
+}
+func (h *Handler) Login(c *gin.Context) {
+
+	var request LoginRequest
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	result, err := h.service.Login(c.Request.Context(), request)
+
+	if err != nil {
+		response.Unauthorized(c, err.Error())
+		return
+	}
+
+	response.JSON(c, http.StatusOK, LoginResponse{
+		Token: result.Token,
+		User: RegisterResponse{
+			ID:       result.User.ID,
+			Username: result.User.Username,
+			Email:    result.User.Email,
 		},
+	})
+}
+func (h *Handler) Me(c *gin.Context) {
+
+	userID := GetUserID(c)
+
+	user, err := h.service.Me(c.Request.Context(), userID)
+
+	if err != nil {
+		response.Internal(c)
+		return
+	}
+
+	response.JSON(c, http.StatusOK, RegisterResponse{
+		ID:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
 	})
 }

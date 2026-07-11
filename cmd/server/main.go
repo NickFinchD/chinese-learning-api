@@ -20,7 +20,7 @@ func main() {
 
 	// Создаем зависимости
 	authRepository := auth.NewRepository(db)
-	authService := auth.NewService(authRepository)
+	authService := auth.NewService(authRepository, cfg)
 	authHandler := auth.NewHandler(authService)
 
 	// Создаем роутер
@@ -37,6 +37,10 @@ func main() {
 	api := router.Group("/api/v1")
 	auth.RegisterRoutes(api.Group("/auth"), authHandler)
 
+	authorized := api.Group("/")
+	authorized.Use(auth.JWTMiddleware(cfg))
+
+	authorized.GET("/me", authHandler.Me)
 	// Запуск сервера
 	if err := router.Run(":" + cfg.App.Port); err != nil {
 		log.Fatalf("failed to start server: %v", err)
