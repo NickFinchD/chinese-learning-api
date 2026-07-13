@@ -7,7 +7,11 @@ import (
 
 	"github.com/NickFinchD/chinese-learning-api/config"
 	"github.com/NickFinchD/chinese-learning-api/internal/auth"
+	"github.com/NickFinchD/chinese-learning-api/internal/courses"
 	"github.com/NickFinchD/chinese-learning-api/internal/database"
+	"github.com/NickFinchD/chinese-learning-api/internal/lessons"
+	"github.com/NickFinchD/chinese-learning-api/internal/progress"
+	"github.com/NickFinchD/chinese-learning-api/internal/review"
 	"github.com/NickFinchD/chinese-learning-api/internal/savedwords"
 	"github.com/NickFinchD/chinese-learning-api/internal/words"
 
@@ -39,6 +43,25 @@ func main() {
 	savedWordsRepository := savedwords.NewRepository(db)
 	savedWordsService := savedwords.NewService(savedWordsRepository)
 	savedWordsHandler := savedwords.NewHandler(savedWordsService)
+
+	coursesRepository := courses.NewRepository(db)
+	coursesService := courses.NewService(coursesRepository)
+	coursesHandler := courses.NewHandler(coursesService)
+
+	lessonsRepository := lessons.NewRepository(db)
+	lessonsService := lessons.NewService(
+		lessonsRepository,
+		wordsRepository,
+	)
+	lessonsHandler := lessons.NewHandler(lessonsService)
+
+	progressRepository := progress.NewRepository(db)
+	progressService := progress.NewService(progressRepository)
+	progressHandler := progress.NewHandler(progressService)
+
+	reviewRepository := review.NewRepository(db)
+	reviewService := review.NewService(reviewRepository)
+	reviewHandler := review.NewHandler(reviewService)
 	// =========================
 	// Router
 	// =========================
@@ -74,6 +97,20 @@ func main() {
 	savedwords.RegisterRoutes(
 		authorized.Group("/words"),
 		savedWordsHandler,
+	)
+	courses.RegisterRoutes(
+		authorized.Group("/courses"),
+		coursesHandler,
+	)
+	lessons.RegisterRoutes(
+		authorized.Group("/lessons"),
+		lessonsHandler,
+	)
+	progress.RegisterRoutes(authorized, progressHandler)
+
+	review.RegisterRoutes(
+		authorized.Group("/reviews"),
+		reviewHandler,
 	)
 	// =========================
 	// Start server
