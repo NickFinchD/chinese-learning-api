@@ -60,13 +60,20 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	response.JSON(c, http.StatusOK, LoginResponse{
-		Token: result.Token,
-		User: RegisterResponse{
-			ID:       result.User.ID,
-			Username: result.User.Username,
-			Email:    result.User.Email,
-		},
+	c.SetCookie(
+		"access_token",
+		result.Token,
+		60*60*24*7, // 7 дней
+		"/",
+		"",
+		false, // Secure=false для localhost
+		true,  // HttpOnly
+	)
+
+	response.JSON(c, http.StatusOK, RegisterResponse{
+		ID:       result.User.ID,
+		Username: result.User.Username,
+		Email:    result.User.Email,
 	})
 }
 func (h *Handler) Me(c *gin.Context) {

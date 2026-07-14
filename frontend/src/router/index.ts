@@ -4,6 +4,7 @@ import AuthLayout from '@/layouts/AuthLayout.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 
 import LoginPage from '@/pages/LoginPage.vue'
+import HomePage from '@/pages/HomePage.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -11,15 +12,12 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-
       component: AuthLayout,
 
       children: [
         {
           path: 'login',
-
           name: 'login',
-
           component: LoginPage,
         },
       ],
@@ -27,10 +25,15 @@ const router = createRouter({
 
     {
       path: '/app',
-
       component: DefaultLayout,
 
-      children: [],
+      children: [
+        {
+          path: '',
+          name: 'home',
+          component: HomePage,
+        },
+      ],
     },
   ],
 })

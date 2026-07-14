@@ -37,18 +37,32 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { login as loginRequest } from '@/services'
 
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseCard from '@/components/base/BaseCard.vue'
 import BaseInput from '@/components/base/BaseInput.vue'
 
+
 const email = ref('')
 const password = ref('')
 
-function login() {
-  console.log({
-    email: email.value,
-    password: password.value,
-  })
+const router = useRouter()
+const authStore = useAuthStore()
+async function login() {
+  try {
+    await loginRequest({
+  email: email.value,
+  password: password.value,
+})
+
+await authStore.loadUser()
+
+await router.push('/app')
+  } catch (error) {
+    console.error(error)
+  }
 }
 </script>

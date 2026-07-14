@@ -2,7 +2,6 @@ package auth
 
 import (
 	"net/http"
-	"strings"
 
 	"github.com/NickFinchD/chinese-learning-api/config"
 	"github.com/NickFinchD/chinese-learning-api/internal/utils"
@@ -13,23 +12,14 @@ func JWTMiddleware(cfg *config.Config) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
-		authHeader := c.GetHeader("Authorization")
+		tokenString, err := c.Cookie("access_token")
 
-		if authHeader == "" {
+		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"message": "authorization header is required",
+				"message": "access token is required",
 			})
 			return
 		}
-
-		if !strings.HasPrefix(authHeader, "Bearer ") {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"message": "invalid authorization header",
-			})
-			return
-		}
-
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
 		claims, err := utils.ParseToken(tokenString, cfg.JWT.Secret)
 
