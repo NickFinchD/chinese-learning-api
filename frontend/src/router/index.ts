@@ -6,6 +6,8 @@ import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import LoginPage from '@/pages/LoginPage.vue'
 import HomePage from '@/pages/HomePage.vue'
 
+import { useAuthStore } from '@/stores/auth'
+
 const router = createRouter({
   history: createWebHistory(),
 
@@ -19,6 +21,9 @@ const router = createRouter({
           path: 'login',
           name: 'login',
           component: LoginPage,
+          meta: {
+            guest: true,
+          },
         },
       ],
     },
@@ -26,6 +31,10 @@ const router = createRouter({
     {
       path: '/app',
       component: DefaultLayout,
+
+      meta: {
+        requiresAuth: true,
+      },
 
       children: [
         {
@@ -38,4 +47,23 @@ const router = createRouter({
   ],
 })
 
+
+router.beforeEach(async (to) => {
+  const auth = useAuthStore()
+
+  if (auth.user === null) {
+    await auth.loadUser()
+  }
+
+  const requiresAuth = to.matched.some(route => route.meta.requiresAuth)
+  const guestOnly = to.matched.some(route => route.meta.guest)
+
+  if (requiresAuth && !auth.isAuthenticated) {
+    return { name: 'login' }
+  }
+
+  if (guestOnly && auth.isAuthenticated) {
+    return { name: 'home' }
+  }
+})
 export default router
