@@ -1,48 +1,22 @@
 <template>
-  <div class="layout">
+  <div class="flex h-screen flex-col bg-gray-100">
 
-    <header class="header">
-      Chinese Learning
-    </header>
+    <AppHeader />
 
-    <main class="content">
-      <RouterView />
-    </main>
+    <div class="flex flex-1 overflow-hidden">
+
+      <AppSidebar />
+
+      <main class="flex-1 overflow-y-auto p-8">
+        <RouterView />
+      </main>
+
+    </div>
 
   </div>
 </template>
 
 <script setup lang="ts">
+import AppHeader from '@/components/layout/AppHeader.vue'
+import AppSidebar from '@/components/layout/AppSidebar.vue'
 </script>
-
-<style scoped>
-.layout {
-  min-height: 100vh;
-
-  display: flex;
-
-  flex-direction: column;
-}
-
-.header {
-  height: 64px;
-
-  display: flex;
-
-  align-items: center;
-
-  padding: 0 24px;
-
-  background: #2563eb;
-
-  color: white;
-
-  font-weight: 600;
-}
-
-.content {
-  flex: 1;
-
-  padding: 32px;
-}
-</style>
