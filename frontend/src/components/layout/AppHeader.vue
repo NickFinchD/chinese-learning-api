@@ -13,6 +13,7 @@
 
       <button
         class="rounded-lg bg-red-500 px-3 py-2 text-white transition hover:bg-red-600"
+        @click="onLogout"
       >
         Logout
       </button>
@@ -21,7 +22,23 @@
 </template>
 
 <script setup lang="ts">
+import { useRouter } from 'vue-router'
+
 import { useAuthStore } from '@/stores/auth'
+import { logout } from '@/services'
 
 const auth = useAuthStore()
+const router = useRouter()
+
+async function onLogout() {
+  try {
+    await logout()
+
+    auth.logout()
+
+    await router.push('/login')
+  } catch (error) {
+    console.error(error)
+  }
+}
 </script>

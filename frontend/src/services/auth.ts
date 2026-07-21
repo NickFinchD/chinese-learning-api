@@ -1,29 +1,22 @@
 import { api } from './client'
 
+import type { ApiResponse } from '@/types/api'
+import type { User } from '@/types/auth'
+
 export interface LoginRequest {
   email: string
   password: string
 }
 
-export interface User {
-  id: number
-  username: string
-  email: string
-}
-
-export interface LoginResponse {
-  success: boolean
-  data: {
-    token: string
-    user: User
-  }
-}
-
 export async function login(request: LoginRequest) {
-  const response = await api.post<LoginResponse>(
+  const response = await api.post<ApiResponse<User>>(
     '/auth/login',
     request,
   )
 
   return response.data
+}
+
+export async function logout() {
+  await api.post('/auth/logout')
 }

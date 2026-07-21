@@ -8,6 +8,14 @@ import HomePage from '@/pages/HomePage.vue'
 
 import { useAuthStore } from '@/stores/auth'
 
+import CoursesPage from '@/pages/CoursesPage.vue'
+import ReviewPage from '@/pages/ReviewPage.vue'
+import SavedWordsPage from '@/pages/SavedWordsPage.vue'
+import SettingsPage from '@/pages/SettingsPage.vue'
+
+import CoursePage from '@/pages/CoursePage.vue'
+import LessonPage from '@/pages/LessonPage.vue'
+
 const router = createRouter({
   history: createWebHistory(),
 
@@ -36,13 +44,43 @@ const router = createRouter({
         requiresAuth: true,
       },
 
-      children: [
-        {
-          path: '',
-          name: 'home',
-          component: HomePage,
-        },
-      ],
+     children: [
+  {
+    path: '',
+    name: 'home',
+    component: HomePage,
+  },
+  {
+    path: 'courses',
+    name: 'courses',
+    component: CoursesPage,
+  },
+  {
+    path: 'courses/:id',
+    name: 'course',
+    component: CoursePage,
+},
+  {
+    path: 'review',
+    name: 'review',
+    component: ReviewPage,
+  },
+  {
+    path: 'saved',
+    name: 'saved-words',
+    component: SavedWordsPage,
+  },
+  {
+  path: 'lessons/:id',
+  name: 'lesson',
+  component: LessonPage,
+},
+  {
+    path: 'settings',
+    name: 'settings',
+    component: SettingsPage,
+  },
+],
     },
   ],
 })

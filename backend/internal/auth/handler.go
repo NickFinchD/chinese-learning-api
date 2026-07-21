@@ -93,3 +93,19 @@ func (h *Handler) Me(c *gin.Context) {
 		Email:    user.Email,
 	})
 }
+func (h *Handler) Logout(c *gin.Context) {
+
+	c.SetCookie(
+		"access_token",
+		"",
+		-1,
+		"/",
+		"",
+		false,
+		true,
+	)
+
+	response.JSON(c, http.StatusOK, gin.H{
+		"success": true,
+	})
+}

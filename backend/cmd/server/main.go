@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/NickFinchD/chinese-learning-api/config"
 	"github.com/NickFinchD/chinese-learning-api/internal/auth"
@@ -87,9 +88,14 @@ func main() {
 		AllowHeaders: []string{
 			"Origin",
 			"Content-Type",
+			"Accept",
 			"Authorization",
 		},
+		ExposeHeaders: []string{
+			"Content-Length",
+		},
 		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
 	}))
 
 	// Health Check

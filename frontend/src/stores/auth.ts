@@ -1,9 +1,13 @@
 import { defineStore } from 'pinia'
+
 import { api } from '@/services/client'
+
+import type { ApiResponse } from '@/types/api'
+import type { User } from '@/types/auth'
 
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    user: null as any,
+    user: null as User | null,
     loading: false,
   }),
 
@@ -16,7 +20,7 @@ export const useAuthStore = defineStore('auth', {
       this.loading = true
 
       try {
-        const response = await api.get('/me')
+        const response = await api.get<ApiResponse<User>>('/me')
 
         this.user = response.data.data
       } catch {
@@ -24,6 +28,10 @@ export const useAuthStore = defineStore('auth', {
       } finally {
         this.loading = false
       }
+    },
+
+    logout() {
+      this.user = null
     },
   },
 })
