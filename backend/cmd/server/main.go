@@ -12,6 +12,7 @@ import (
 	"github.com/NickFinchD/chinese-learning-api/internal/database"
 	"github.com/NickFinchD/chinese-learning-api/internal/lessons"
 	"github.com/NickFinchD/chinese-learning-api/internal/progress"
+	"github.com/NickFinchD/chinese-learning-api/internal/quizzes"
 	"github.com/NickFinchD/chinese-learning-api/internal/review"
 	"github.com/NickFinchD/chinese-learning-api/internal/savedwords"
 	"github.com/NickFinchD/chinese-learning-api/internal/words"
@@ -49,11 +50,16 @@ func main() {
 	coursesRepository := courses.NewRepository(db)
 	coursesService := courses.NewService(coursesRepository)
 	coursesHandler := courses.NewHandler(coursesService)
+	// Quizzes
+	quizzesRepository := quizzes.NewRepository(db)
+	quizzesService := quizzes.NewService(quizzesRepository)
+	quizzesHandler := quizzes.NewHandler(quizzesService)
 
 	lessonsRepository := lessons.NewRepository(db)
 	lessonsService := lessons.NewService(
 		lessonsRepository,
 		wordsRepository,
+		quizzesService,
 	)
 	lessonsHandler := lessons.NewHandler(lessonsService)
 
@@ -132,6 +138,7 @@ func main() {
 		authorized.Group("/courses"),
 		coursesHandler,
 	)
+
 	lessons.RegisterRoutes(
 		authorized.Group("/lessons"),
 		lessonsHandler,
@@ -145,7 +152,9 @@ func main() {
 	// =========================
 	// Start server
 	// =========================
+	quizzesGroup := router.Group("/quizzes")
 
+	quizzes.RegisterRoutes(quizzesGroup, quizzesHandler)
 	if err := router.Run(":" + cfg.App.Port); err != nil {
 		log.Fatalf("failed to start server: %v", err)
 	}

@@ -5,15 +5,18 @@ import "context"
 type Service struct {
 	repository   *Repository
 	wordProvider WordProvider
+	quizProvider QuizProvider
 }
 
 func NewService(
 	repository *Repository,
 	wordProvider WordProvider,
+	quizProvider QuizProvider,
 ) *Service {
 	return &Service{
 		repository:   repository,
 		wordProvider: wordProvider,
+		quizProvider: quizProvider,
 	}
 }
 

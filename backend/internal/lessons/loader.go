@@ -8,11 +8,21 @@ func (s *Service) loadSteps(
 ) ([]LessonStepResponse, error) {
 
 	wordIDs := make([]int64, 0)
+	quizIDs := make([]int64, 0)
 
 	for _, step := range steps {
 
-		if step.StepType == "word" && step.EntityID != nil {
-			wordIDs = append(wordIDs, *step.EntityID)
+		switch step.StepType {
+
+		case "word":
+			if step.EntityID != nil {
+				wordIDs = append(wordIDs, *step.EntityID)
+			}
+
+		case "quiz":
+			if step.EntityID != nil {
+				quizIDs = append(quizIDs, *step.EntityID)
+			}
 		}
 	}
 
@@ -21,10 +31,20 @@ func (s *Service) loadSteps(
 		return nil, err
 	}
 
+	quizzes, err := s.quizProvider.GetByIDs(ctx, quizIDs)
+	if err != nil {
+		return nil, err
+	}
+
 	wordMap := make(map[int64]any)
+	quizMap := make(map[int64]any)
 
 	for _, word := range words {
 		wordMap[word.ID] = word
+	}
+
+	for _, quiz := range quizzes {
+		quizMap[quiz.ID] = quiz
 	}
 
 	result := make([]LessonStepResponse, 0, len(steps))
@@ -36,13 +56,16 @@ func (s *Service) loadSteps(
 		switch step.StepType {
 
 		case "word":
-
 			if step.EntityID != nil {
 				data = wordMap[*step.EntityID]
 			}
 
-		default:
+		case "quiz":
+			if step.EntityID != nil {
+				data = quizMap[*step.EntityID]
+			}
 
+		default:
 			data = nil
 		}
 
