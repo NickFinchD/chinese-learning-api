@@ -1,19 +1,22 @@
 <template>
   <div>
-    <div v-if="courses.loading">
+    <div
+      v-if="courses.loading"
+      class="text-gray-500 dark:text-gray-400"
+    >
       Загрузка...
     </div>
 
     <div v-else-if="courses.current">
-      <h1 class="mb-2 text-3xl font-bold">
+      <h1 class="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
         {{ courses.current.title }}
       </h1>
 
-      <p class="mb-6 text-gray-600">
+      <p class="mb-6 text-gray-600 dark:text-gray-400">
         {{ courses.current.description }}
       </p>
 
-      <h2 class="mb-4 text-xl font-semibold">
+      <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
         Уроки
       </h2>
 
@@ -22,14 +25,14 @@
           v-for="lesson in courses.current.lessons"
           :key="lesson.id"
           :to="{ name: 'lesson', params: { id: lesson.id } }"
-          class="flex items-center justify-between rounded-lg border p-4 transition hover:bg-gray-50"
+          class="flex items-center justify-between rounded-lg border border-white/50 bg-white/30 p-4 backdrop-blur-xl transition hover:bg-white/50 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
         >
           <div>
-            <div class="font-medium">
+            <div class="font-medium text-gray-900 dark:text-white">
               Урок {{ lesson.lesson_number }}
             </div>
 
-            <div class="text-gray-600">
+            <div class="text-gray-600 dark:text-gray-400">
               {{ lesson.title }}
             </div>
           </div>
@@ -79,10 +82,10 @@ function statusClass(lessonId: number) {
   const status = progressByLesson.value[lessonId]?.status
 
   if (status === 'completed') {
-    return 'bg-green-100 text-green-700'
+    return 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400'
   }
 
-  return 'bg-blue-100 text-blue-700'
+  return 'bg-[#41b3a3]/15 text-[#41b3a3] dark:bg-[#41b3a3]/20 dark:text-[#85dcba]'
 }
 
 async function loadProgress() {

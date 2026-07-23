@@ -1,32 +1,32 @@
 <template>
   <div>
-    <h1 class="mb-8 text-3xl font-bold">
+    <h1 class="mb-8 text-3xl font-bold text-gray-900 dark:text-white">
       Тесты
     </h1>
 
     <div class="grid gap-6 md:grid-cols-2">
       <RouterLink
         to="/app/tests/grammar"
-        class="block rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-md"
+        class="block rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl transition hover:shadow-md dark:border-white/10 dark:bg-white/5"
       >
-        <h2 class="mb-2 text-xl font-semibold">
+        <h2 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
           Грамматика по HSK
         </h2>
 
-        <p class="text-gray-600">
+        <p class="text-gray-600 dark:text-gray-400">
           Тест с вариантами ответов по выбранному уровню HSK.
         </p>
       </RouterLink>
 
       <RouterLink
         to="/app/tests/words"
-        class="block rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-md"
+        class="block rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl transition hover:shadow-md dark:border-white/10 dark:bg-white/5"
       >
-        <h2 class="mb-2 text-xl font-semibold">
+        <h2 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
           Слово → перевод
         </h2>
 
-        <p class="text-gray-600">
+        <p class="text-gray-600 dark:text-gray-400">
           Тренировка на основе ваших сохранённых слов.
         </p>
       </RouterLink>

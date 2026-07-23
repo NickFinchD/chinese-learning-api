@@ -1,12 +1,12 @@
 <template>
   <div>
-    <h1 class="mb-8 text-3xl font-bold">
+    <h1 class="mb-8 text-3xl font-bold text-gray-900 dark:text-white">
       Курсы
     </h1>
 
     <div
       v-if="courses.loading"
-      class="text-gray-500"
+      class="text-gray-500 dark:text-gray-400"
     >
       Загрузка курсов...
     </div>
@@ -19,18 +19,18 @@
         v-for="course in courses.items"
         :key="course.id"
         :to="{ name: 'course', params: { id: course.id } }"
-        class="block rounded-xl border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-md"
+        class="block rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl transition hover:shadow-md dark:border-white/10 dark:bg-white/5"
       >
-        <h2 class="mb-2 text-xl font-semibold">
+        <h2 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
           {{ course.title }}
         </h2>
 
-        <p class="mb-4 text-gray-600">
+        <p class="mb-4 text-gray-600 dark:text-gray-400">
           {{ course.description }}
         </p>
 
         <span
-          class="inline-flex rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700"
+          class="inline-flex rounded-full bg-[#41b3a3]/15 px-3 py-1 text-sm font-medium text-[#41b3a3] dark:bg-[#41b3a3]/20 dark:text-[#85dcba]"
         >
           HSK {{ course.hsk_level }}
         </span>

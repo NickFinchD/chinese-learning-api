@@ -1,0 +1,1 @@
+DELETE FROM texts WHERE hsk_level BETWEEN 1 AND 6;

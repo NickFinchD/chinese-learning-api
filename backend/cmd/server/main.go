@@ -9,12 +9,13 @@ import (
 	"github.com/NickFinchD/chinese-learning-api/internal/auth"
 	"github.com/NickFinchD/chinese-learning-api/internal/courses"
 	"github.com/NickFinchD/chinese-learning-api/internal/database"
+	"github.com/NickFinchD/chinese-learning-api/internal/gamification"
 	"github.com/NickFinchD/chinese-learning-api/internal/learning"
 	"github.com/NickFinchD/chinese-learning-api/internal/lessons"
 	"github.com/NickFinchD/chinese-learning-api/internal/progress"
 	"github.com/NickFinchD/chinese-learning-api/internal/quizzes"
-	"github.com/NickFinchD/chinese-learning-api/internal/review"
 	"github.com/NickFinchD/chinese-learning-api/internal/savedwords"
+	"github.com/NickFinchD/chinese-learning-api/internal/texts"
 	"github.com/NickFinchD/chinese-learning-api/internal/words"
 	"github.com/gin-contrib/cors"
 
@@ -67,16 +68,17 @@ func main() {
 	progressService := progress.NewService(progressRepository)
 	progressHandler := progress.NewHandler(progressService)
 
-	reviewRepository := review.NewRepository(db)
-	reviewService := review.NewService(
-		reviewRepository,
-		wordsRepository,
-	)
-	reviewHandler := review.NewHandler(reviewService)
+	textsRepository := texts.NewRepository(db)
+	textsService := texts.NewService(textsRepository)
+	textsHandler := texts.NewHandler(textsService)
 
 	learningRepository := learning.NewRepository(db)
 	learningService := learning.NewService(learningRepository)
 	learningHandler := learning.NewHandler(learningService)
+
+	gamificationRepository := gamification.NewRepository(db)
+	gamificationService := gamification.NewService(gamificationRepository)
+	gamificationHandler := gamification.NewHandler(gamificationService)
 	// =========================
 	// Router
 	// =========================
@@ -149,9 +151,9 @@ func main() {
 	)
 	progress.RegisterRoutes(authorized, progressHandler)
 
-	review.RegisterRoutes(
-		authorized.Group("/reviews"),
-		reviewHandler,
+	texts.RegisterRoutes(
+		authorized.Group("/texts"),
+		textsHandler,
 	)
 	quizzes.RegisterRoutes(
 		authorized.Group("/quizzes"),
@@ -160,6 +162,10 @@ func main() {
 	learning.RegisterRoutes(
 		authorized.Group("/learning"),
 		learningHandler,
+	)
+	gamification.RegisterRoutes(
+		authorized.Group("/gamification"),
+		gamificationHandler,
 	)
 
 	// =========================

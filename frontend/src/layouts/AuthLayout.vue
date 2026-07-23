@@ -1,22 +1,11 @@
 <template>
-  <main class="auth-layout">
+  <main class="relative flex min-h-screen items-center justify-center px-4">
+    <ThemeToggle class="absolute right-4 top-4" />
+
     <RouterView />
   </main>
 </template>
 
 <script setup lang="ts">
+import ThemeToggle from '@/components/base/ThemeToggle.vue'
 </script>
-
-<style scoped>
-.auth-layout {
-  min-height: 100vh;
-
-  display: flex;
-
-  justify-content: center;
-
-  align-items: center;
-
-  background: #f5f7fb;
-}
-</style>

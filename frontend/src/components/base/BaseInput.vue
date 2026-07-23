@@ -3,7 +3,7 @@
     :value="modelValue"
     :type="type"
     :placeholder="placeholder"
-    class="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500"
+    class="w-full rounded-xl border border-white/50 bg-white/40 px-4 py-3 text-gray-900 placeholder-gray-500 outline-none backdrop-blur-md transition focus:border-[#41b3a3] focus:bg-white/60 dark:border-white/10 dark:bg-white/5 dark:text-white dark:placeholder-gray-400 dark:focus:bg-white/10"
     @input="onInput"
   >
 </template>

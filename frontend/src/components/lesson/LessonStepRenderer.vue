@@ -14,7 +14,7 @@
 
   <div
     v-else
-    class="rounded-xl border border-red-200 bg-red-50 p-6 text-red-700"
+    class="rounded-xl border border-red-200 bg-red-50 p-6 text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-400"
   >
     Неизвестный тип шага: {{ step.step_type }}
   </div>

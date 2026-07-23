@@ -1,12 +1,12 @@
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-gray-100 px-4">
+  <div class="flex w-full items-center justify-center px-4">
     <BaseCard class="w-full max-w-md">
 
-      <h1 class="mb-2 text-4xl font-bold text-gray-900">
+      <h1 class="mb-2 text-4xl font-bold text-gray-900 dark:text-white">
         Wojiao
       </h1>
 
-      <p class="mb-8 text-gray-500">
+      <p class="mb-8 text-gray-500 dark:text-gray-400">
         С возвращением 👋
       </p>
 

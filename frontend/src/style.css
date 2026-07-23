@@ -1,1 +1,24 @@
 @import "tailwindcss";
+
+/* Manual (class-based) dark mode instead of only following the OS preference */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Palette reference (from дизайн/цвет.jpg) — used directly as Tailwind
+ * arbitrary values in components, e.g. bg-[#41b3a3] or bg-[#41b3a3]/40 for
+ * 40% opacity (see README "Дизайн" section for the full cheat sheet).
+ *
+ * Not defined as CSS custom properties here on purpose: the installed
+ * tailwindcss 4.3.2 (a) doesn't turn `@theme` custom color keys into
+ * bg-*/text-*/border-* utilities — it passes the block through unprocessed
+ * — and (b) its CSS optimizer strips plain `:root { --x: ... }` custom
+ * properties as "unused" even when referenced via var() in an arbitrary
+ * value. Both confirmed by inspecting the compiled dev output. Literal hex
+ * arbitrary values are what actually survives the build.
+ *
+ *   terracotta #e27d60
+ *   mint       #85dcba
+ *   ochre      #e8a87c
+ *   mauve      #c38d9e
+ *   teal       #41b3a3
+ */

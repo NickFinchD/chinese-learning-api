@@ -7,19 +7,19 @@
     v-else-if="finished"
     class="max-w-xl"
   >
-    <div class="rounded-2xl border bg-white p-8 text-center shadow">
-      <div class="mb-2 text-2xl font-bold">
+    <div class="rounded-2xl border border-white/50 bg-white/30 p-8 text-center shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+      <div class="mb-2 text-2xl font-bold text-gray-900 dark:text-white">
         Урок пройден! 🎉
       </div>
 
-      <p class="mb-6 text-gray-600">
+      <p class="mb-6 text-gray-600 dark:text-gray-400">
         Результат: {{ finalScore }}%
       </p>
 
       <RouterLink
         v-if="lessons.current"
         :to="{ name: 'course', params: { id: lessons.current.course_id } }"
-        class="inline-block rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700"
+        class="inline-block rounded-full bg-[#41b3a3] px-4 py-3 font-semibold text-white shadow-lg shadow-[#41b3a3]/30 transition hover:bg-[#41b3a3]/90"
       >
         Вернуться к курсу
       </RouterLink>
@@ -27,21 +27,21 @@
   </div>
 
   <div v-else-if="lessons.current">
-    <h1 class="mb-2 text-3xl font-bold">
+    <h1 class="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
       {{ lessons.current.title }}
     </h1>
 
-    <p class="mb-2">
+    <p class="mb-2 text-gray-700 dark:text-gray-300">
       {{ lessons.current.description }}
     </p>
 
-    <div class="mb-2 text-sm text-gray-500">
+    <div class="mb-2 text-sm text-gray-500 dark:text-gray-400">
       Шаг {{ currentStepIndex + 1 }} из {{ lessons.current.steps.length }}
     </div>
 
-    <div class="mb-6 h-2 overflow-hidden rounded-full bg-gray-200">
+    <div class="mb-6 h-2 overflow-hidden rounded-full bg-gray-200/50 dark:bg-white/10">
       <div
-        class="h-full bg-blue-600 transition-all duration-300"
+        class="h-full bg-[#41b3a3] transition-all duration-300"
         :style="{
           width: `${((currentStepIndex + 1) / lessons.current.steps.length) * 100}%`
         }"
@@ -50,7 +50,7 @@
 
     <div class="mb-6 flex justify-between">
       <button
-        class="rounded bg-gray-200 px-4 py-2 disabled:opacity-50"
+        class="rounded-full border border-white/50 bg-white/30 px-4 py-2 text-gray-700 backdrop-blur-md transition hover:bg-white/50 disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
         :disabled="currentStepIndex === 0"
         @click="previousStep"
       >
@@ -58,7 +58,7 @@
       </button>
 
       <button
-        class="rounded bg-blue-600 px-4 py-2 text-white"
+        class="rounded-full bg-[#41b3a3] px-4 py-2 text-white shadow-lg shadow-[#41b3a3]/30 transition hover:bg-[#41b3a3]/90"
         @click="nextStep"
       >
         {{ isLastStep ? 'Завершить урок' : 'Далее' }}

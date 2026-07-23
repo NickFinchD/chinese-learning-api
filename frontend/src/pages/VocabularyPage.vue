@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="mb-8 text-3xl font-bold">
+    <h1 class="mb-8 text-3xl font-bold text-gray-900 dark:text-white">
       Словарь
     </h1>
 
@@ -14,7 +14,7 @@
 
       <select
         v-model.number="vocabulary.hsk"
-        class="rounded-xl border border-gray-300 px-4 py-3 outline-none transition focus:border-blue-500"
+        class="rounded-xl border border-white/50 bg-white/40 px-4 py-3 text-gray-900 outline-none backdrop-blur-md transition focus:border-[#41b3a3] dark:border-white/10 dark:bg-white/5 dark:text-white"
         @change="vocabulary.loadWords()"
       >
         <option :value="0">
@@ -29,10 +29,10 @@
         </option>
       </select>
 
-      <div class="ml-auto flex gap-2 rounded-xl bg-gray-100 p-1">
+      <div class="ml-auto flex gap-2 rounded-xl border border-white/50 bg-white/30 p-1 backdrop-blur-md dark:border-white/10 dark:bg-white/5">
         <button
           class="rounded-lg px-4 py-2 text-sm font-medium transition"
-          :class="tab === 'all' ? 'bg-white shadow-sm' : 'text-gray-500'"
+          :class="tab === 'all' ? 'bg-white/80 shadow-sm dark:bg-white/15 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
           @click="onShowAll"
         >
           Все слова
@@ -40,7 +40,7 @@
 
         <button
           class="rounded-lg px-4 py-2 text-sm font-medium transition"
-          :class="tab === 'saved' ? 'bg-white shadow-sm' : 'text-gray-500'"
+          :class="tab === 'saved' ? 'bg-white/80 shadow-sm dark:bg-white/15 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
           @click="onShowSaved"
         >
           Сохранённые
@@ -48,7 +48,7 @@
 
         <button
           class="rounded-lg px-4 py-2 text-sm font-medium transition"
-          :class="tab === 'learned' ? 'bg-white shadow-sm' : 'text-gray-500'"
+          :class="tab === 'learned' ? 'bg-white/80 shadow-sm dark:bg-white/15 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
           @click="onShowLearned"
         >
           Изучено
@@ -56,7 +56,7 @@
 
         <button
           class="rounded-lg px-4 py-2 text-sm font-medium transition"
-          :class="tab === 'progress' ? 'bg-white shadow-sm' : 'text-gray-500'"
+          :class="tab === 'progress' ? 'bg-white/80 shadow-sm dark:bg-white/15 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
           @click="onShowInProgress"
         >
           На изучении
@@ -67,14 +67,14 @@
     <template v-if="tab === 'progress'">
       <div
         v-if="learning.loadingInProgress"
-        class="text-gray-500"
+        class="text-gray-500 dark:text-gray-400"
       >
-        Loading...
+        Загрузка...
       </div>
 
       <div
         v-else-if="learning.inProgressWords.length === 0"
-        class="text-gray-500"
+        class="text-gray-500 dark:text-gray-400"
       >
         Пока нет слов на изучении. Пройдите тренировку «Слово → перевод» в разделе «Тесты», чтобы начать.
       </div>
@@ -86,34 +86,34 @@
         <div
           v-for="word in learning.inProgressWords"
           :key="word.word_id"
-          class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+          class="rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5"
         >
           <div class="mb-2 flex items-center gap-2">
-            <div class="text-2xl font-semibold">
+            <div class="text-2xl font-semibold text-gray-900 dark:text-white">
               {{ word.hanzi }}
             </div>
 
-            <span class="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
+            <span class="inline-flex rounded-full bg-[#41b3a3]/15 px-3 py-1 text-xs font-medium text-[#41b3a3] dark:bg-[#41b3a3]/20 dark:text-[#85dcba]">
               HSK {{ word.hsk_level }}
             </span>
           </div>
 
-          <div class="mb-1 text-gray-500">
+          <div class="mb-1 text-gray-500 dark:text-gray-400">
             {{ word.pinyin }}
           </div>
 
-          <div class="mb-4 text-gray-700">
+          <div class="mb-4 text-gray-700 dark:text-gray-300">
             {{ word.translation }}
           </div>
 
-          <div class="mb-2 h-2 overflow-hidden rounded-full bg-gray-200">
+          <div class="mb-2 h-2 overflow-hidden rounded-full bg-gray-200/50 dark:bg-white/10">
             <div
-              class="h-full bg-blue-600 transition-all duration-300"
+              class="h-full bg-[#41b3a3] transition-all duration-300"
               :style="{ width: `${(word.stage / word.max_stage) * 100}%` }"
             />
           </div>
 
-          <div class="flex items-center justify-between text-xs text-gray-500">
+          <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
             <span>Осталось повторений: {{ word.repetitions_left }}</span>
             <span>{{ formatTimeLeft(word.next_eligible_at) }}</span>
           </div>
@@ -124,14 +124,14 @@
     <template v-else>
       <div
         v-if="loading"
-        class="text-gray-500"
+        class="text-gray-500 dark:text-gray-400"
       >
-        Loading...
+        Загрузка...
       </div>
 
       <div
         v-else-if="visibleWords.length === 0"
-        class="text-gray-500"
+        class="text-gray-500 dark:text-gray-400"
       >
         {{ emptyMessage }}
       </div>
@@ -143,31 +143,31 @@
         <div
           v-for="word in visibleWords"
           :key="word.id"
-          class="relative rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+          class="relative rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5"
         >
           <button
             class="absolute right-4 top-4 text-xl leading-none"
-            :class="isSaved(word.id) ? 'text-yellow-400' : 'text-gray-300 hover:text-gray-400'"
+            :class="isSaved(word.id) ? 'text-[#e8a87c]' : 'text-gray-300 hover:text-gray-400 dark:text-gray-600 dark:hover:text-gray-400'"
             @click="toggleSaved(word)"
           >
             {{ isSaved(word.id) ? '★' : '☆' }}
           </button>
 
           <div class="mb-2 flex items-center gap-2 pr-8">
-            <div class="text-2xl font-semibold">
+            <div class="text-2xl font-semibold text-gray-900 dark:text-white">
               {{ word.hanzi }}
             </div>
 
-            <span class="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700">
+            <span class="inline-flex rounded-full bg-[#41b3a3]/15 px-3 py-1 text-xs font-medium text-[#41b3a3] dark:bg-[#41b3a3]/20 dark:text-[#85dcba]">
               HSK {{ word.hsk_level }}
             </span>
           </div>
 
-          <div class="mb-1 text-gray-500">
+          <div class="mb-1 text-gray-500 dark:text-gray-400">
             {{ word.pinyin }}
           </div>
 
-          <div class="text-gray-700">
+          <div class="text-gray-700 dark:text-gray-300">
             {{ word.translation }}
           </div>
         </div>

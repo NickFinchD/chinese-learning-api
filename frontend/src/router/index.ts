@@ -9,13 +9,17 @@ import HomePage from '@/pages/HomePage.vue'
 import { useAuthStore } from '@/stores/auth'
 
 import CoursesPage from '@/pages/CoursesPage.vue'
-import ReviewPage from '@/pages/ReviewPage.vue'
 import VocabularyPage from '@/pages/VocabularyPage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
 
 import TestsPage from '@/pages/TestsPage.vue'
 import GrammarTestPage from '@/pages/GrammarTestPage.vue'
 import WordTrainingPage from '@/pages/WordTrainingPage.vue'
+
+import TextsPage from '@/pages/TextsPage.vue'
+import TextPage from '@/pages/TextPage.vue'
+
+import AchievementsPage from '@/pages/AchievementsPage.vue'
 
 import CoursePage from '@/pages/CoursePage.vue'
 import LessonPage from '@/pages/LessonPage.vue'
@@ -65,14 +69,19 @@ const router = createRouter({
     component: CoursePage,
 },
   {
-    path: 'review',
-    name: 'review',
-    component: ReviewPage,
-  },
-  {
     path: 'vocabulary',
     name: 'vocabulary',
     component: VocabularyPage,
+  },
+  {
+    path: 'texts',
+    name: 'texts',
+    component: TextsPage,
+  },
+  {
+    path: 'texts/:id',
+    name: 'text',
+    component: TextPage,
   },
   {
     path: 'tests',
@@ -94,6 +103,11 @@ const router = createRouter({
   name: 'lesson',
   component: LessonPage,
 },
+  {
+    path: 'achievements',
+    name: 'achievements',
+    component: AchievementsPage,
+  },
   {
     path: 'settings',
     name: 'settings',
