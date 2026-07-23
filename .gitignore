@@ -1,0 +1,12 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+.env
+
+.idea/
+.vscode/settings.json
+.DS_Store
+
+*.log
