@@ -68,10 +68,20 @@ func (s *Service) CompleteLesson(
 	score int,
 ) error {
 
-	return s.repository.CompleteLesson(
+	err := s.repository.CompleteLesson(
 		ctx,
 		userID,
 		lessonID,
 		score,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return s.repository.UpdateCourseProgress(
+		ctx,
+		userID,
+		lessonID,
 	)
 }

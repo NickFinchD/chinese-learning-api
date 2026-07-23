@@ -155,3 +155,66 @@ func (r *Repository) CompleteLesson(
 
 	return err
 }
+func (r *Repository) UpdateCourseProgress(
+	ctx context.Context,
+	userID int64,
+	lessonID int64,
+) error {
+
+	query := `
+		WITH lesson_data AS (
+			SELECT course_id
+			FROM lessons
+			WHERE id = $2
+		),
+		total AS (
+			SELECT COUNT(*) AS total_lessons
+			FROM lessons
+			WHERE course_id = (SELECT course_id FROM lesson_data)
+		),
+		completed AS (
+			SELECT COUNT(*) AS completed_lessons
+			FROM user_lesson_progress ulp
+			JOIN lessons l ON l.id = ulp.lesson_id
+			WHERE ulp.user_id = $1
+				AND ulp.status = 'completed'
+				AND l.course_id = (SELECT course_id FROM lesson_data)
+		)
+
+		INSERT INTO user_course_progress (
+			user_id,
+			course_id,
+			completed_lessons,
+			total_lessons,
+			progress_percent,
+			updated_at
+		)
+
+		SELECT
+			$1,
+			(SELECT course_id FROM lesson_data),
+			COALESCE((SELECT completed_lessons FROM completed), 0),
+			(SELECT total_lessons FROM total),
+			ROUND(
+				COALESCE((SELECT completed_lessons FROM completed), 0) * 100.0 /
+				(SELECT total_lessons FROM total)
+			),
+			NOW()
+
+		ON CONFLICT (user_id, course_id)
+		DO UPDATE SET
+			completed_lessons = EXCLUDED.completed_lessons,
+			total_lessons = EXCLUDED.total_lessons,
+			progress_percent = EXCLUDED.progress_percent,
+			updated_at = NOW();
+	`
+
+	_, err := r.db.Exec(
+		ctx,
+		query,
+		userID,
+		lessonID,
+	)
+
+	return err
+}
