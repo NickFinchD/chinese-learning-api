@@ -5,6 +5,8 @@ dist-ssr/
 
 .env
 
+backend/backups/
+
 .idea/
 .vscode/settings.json
 .DS_Store
