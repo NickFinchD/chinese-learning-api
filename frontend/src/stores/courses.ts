@@ -22,7 +22,7 @@ export const useCoursesStore = defineStore('courses', {
 
         console.log(response)
 
-        this.items = response.data
+        this.items = response.data ?? []
       } finally {
         this.loading = false
       }

@@ -1,6 +1,29 @@
 <template>
-  <div v-if="lessons.loading">
-    Loading...
+  <div v-if="lessons.loading || resuming">
+    Загрузка...
+  </div>
+
+  <div
+    v-else-if="finished"
+    class="max-w-xl"
+  >
+    <div class="rounded-2xl border bg-white p-8 text-center shadow">
+      <div class="mb-2 text-2xl font-bold">
+        Урок пройден! 🎉
+      </div>
+
+      <p class="mb-6 text-gray-600">
+        Результат: {{ finalScore }}%
+      </p>
+
+      <RouterLink
+        v-if="lessons.current"
+        :to="{ name: 'course', params: { id: lessons.current.course_id } }"
+        class="inline-block rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700"
+      >
+        Вернуться к курсу
+      </RouterLink>
+    </div>
   </div>
 
   <div v-else-if="lessons.current">
@@ -13,7 +36,7 @@
     </p>
 
     <div class="mb-2 text-sm text-gray-500">
-      Step {{ currentStepIndex + 1 }} of {{ lessons.current.steps.length }}
+      Шаг {{ currentStepIndex + 1 }} из {{ lessons.current.steps.length }}
     </div>
 
     <div class="mb-6 h-2 overflow-hidden rounded-full bg-gray-200">
@@ -31,41 +54,47 @@
         :disabled="currentStepIndex === 0"
         @click="previousStep"
       >
-        Previous
+        Назад
       </button>
 
       <button
         class="rounded bg-blue-600 px-4 py-2 text-white"
         @click="nextStep"
       >
-        {{ isLastStep ? 'Finish lesson' : 'Next' }}
+        {{ isLastStep ? 'Завершить урок' : 'Далее' }}
       </button>
     </div>
 
     <div
-  v-if="currentStep"
-  class="mb-4"
->
-  <LessonStepRenderer
-    :step="currentStep"
-  />
-</div>
+      v-if="currentStep"
+      class="mb-4"
+    >
+      <LessonStepRenderer
+        :step="currentStep"
+        @answered="onAnswered"
+      />
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute } from 'vue-router'
-
+import { RouterLink, useRoute } from 'vue-router'
 
 import { useLessonsStore } from '@/stores/lessons'
 import LessonStepRenderer from '@/components/lesson/LessonStepRenderer.vue'
 
-
 const lessons = useLessonsStore()
 const route = useRoute()
 
+const lessonId = Number(route.params.id)
+
 const currentStepIndex = ref(0)
+const resuming = ref(true)
+const finished = ref(false)
+const finalScore = ref(0)
+
+const quizResults = new Map<number, boolean>()
 
 const currentStep = computed(() => {
   return lessons.current?.steps[currentStepIndex.value] ?? null
@@ -79,26 +108,79 @@ const isLastStep = computed(() => {
   return currentStepIndex.value === lessons.current.steps.length - 1
 })
 
-function nextStep() {
+function onAnswered(correct: boolean) {
+  const stepId = currentStep.value?.id
+
+  if (stepId !== undefined) {
+    quizResults.set(stepId, correct)
+  }
+}
+
+function computeScore(): number {
+  if (!lessons.current) {
+    return 0
+  }
+
+  const quizSteps = lessons.current.steps.filter(step => step.step_type === 'quiz')
+
+  if (quizSteps.length === 0) {
+    return 100
+  }
+
+  const correctCount = quizSteps.filter(step => quizResults.get(step.id)).length
+
+  return Math.round((correctCount / quizSteps.length) * 100)
+}
+
+async function nextStep() {
   if (!lessons.current) {
     return
   }
 
   if (currentStepIndex.value < lessons.current.steps.length - 1) {
     currentStepIndex.value++
+
+    lessons.saveStep(lessonId, currentStepIndex.value).catch(error => {
+      console.error('Failed to save lesson step:', error)
+    })
+
     return
   }
 
-  console.log('Lesson finished')
+  finalScore.value = computeScore()
+
+  try {
+    await lessons.finishLesson(lessonId, finalScore.value)
+
+    finished.value = true
+  } catch (error) {
+    console.error('Failed to complete the lesson:', error)
+  }
 }
 
 function previousStep() {
   if (currentStepIndex.value > 0) {
     currentStepIndex.value--
+
+    lessons.saveStep(lessonId, currentStepIndex.value).catch(error => {
+      console.error('Failed to save lesson step:', error)
+    })
   }
 }
 
-onMounted(() => {
-  lessons.loadLesson(Number(route.params.id))
+onMounted(async () => {
+  await lessons.loadLesson(lessonId)
+
+  try {
+    const resumeStepIndex = await lessons.resumeOrStart(lessonId)
+
+    currentStepIndex.value = lessons.current
+      ? Math.min(resumeStepIndex, lessons.current.steps.length - 1)
+      : 0
+  } catch (error) {
+    console.error('Failed to load lesson progress:', error)
+  } finally {
+    resuming.value = false
+  }
 })
 </script>

@@ -7,7 +7,7 @@
         class="rounded-lg px-4 py-3 transition hover:bg-blue-50"
         active-class="bg-blue-100 text-blue-700 font-semibold"
       >
-        🏠 Dashboard
+        🏠 Главная
       </RouterLink>
 
       <RouterLink
@@ -15,15 +15,15 @@
         class="rounded-lg px-4 py-3 transition hover:bg-blue-50"
         active-class="bg-blue-100 text-blue-700 font-semibold"
       >
-        📚 Courses
+        📚 Курсы
       </RouterLink>
 
       <RouterLink
-        to="/app/saved"
+        to="/app/vocabulary"
         class="rounded-lg px-4 py-3 transition hover:bg-blue-50"
         active-class="bg-blue-100 text-blue-700 font-semibold"
       >
-        ⭐ Saved Words
+        📖 Словарь
       </RouterLink>
 
       <RouterLink
@@ -31,7 +31,15 @@
         class="rounded-lg px-4 py-3 transition hover:bg-blue-50"
         active-class="bg-blue-100 text-blue-700 font-semibold"
       >
-        🔁 Review
+        🔁 Повторение
+      </RouterLink>
+
+      <RouterLink
+        to="/app/tests"
+        class="rounded-lg px-4 py-3 transition hover:bg-blue-50"
+        active-class="bg-blue-100 text-blue-700 font-semibold"
+      >
+        🧪 Тесты
       </RouterLink>
 
       <RouterLink
@@ -39,7 +47,7 @@
         class="rounded-lg px-4 py-3 transition hover:bg-blue-50"
         active-class="bg-blue-100 text-blue-700 font-semibold"
       >
-        ⚙️ Settings
+        ⚙️ Настройки
       </RouterLink>
 
     </nav>

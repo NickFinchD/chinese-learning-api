@@ -39,7 +39,7 @@ func Load() *Config {
 
 	return &Config{
 		App: AppConfig{
-			Name: getEnv("APP_NAME", "Chinese Learning API"),
+			Name: getEnv("APP_NAME", "Wojiao API"),
 			Port: getEnv("APP_PORT", "8080"),
 		},
 		DB: DBConfig{

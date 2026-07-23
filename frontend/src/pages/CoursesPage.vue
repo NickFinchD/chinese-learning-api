@@ -1,14 +1,14 @@
 <template>
   <div>
     <h1 class="mb-8 text-3xl font-bold">
-      Courses
+      Курсы
     </h1>
 
     <div
       v-if="courses.loading"
       class="text-gray-500"
     >
-      Loading courses...
+      Загрузка курсов...
     </div>
 
     <div

@@ -3,11 +3,11 @@
     <BaseCard class="w-full max-w-md">
 
       <h1 class="mb-2 text-4xl font-bold text-gray-900">
-        Chinese Learning
+        Wojiao
       </h1>
 
       <p class="mb-8 text-gray-500">
-        Welcome back 👋
+        С возвращением 👋
       </p>
 
       <form
@@ -17,17 +17,17 @@
         <BaseInput
           v-model="email"
           type="email"
-          placeholder="Email"
+          placeholder="Эл. почта"
         />
 
         <BaseInput
           v-model="password"
           type="password"
-          placeholder="Password"
+          placeholder="Пароль"
         />
 
         <BaseButton type="submit">
-          Login
+          Войти
         </BaseButton>
       </form>
 

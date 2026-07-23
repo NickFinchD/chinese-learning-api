@@ -2,11 +2,19 @@ package progress
 
 import "context"
 
-type Service struct {
-	repository *Repository
+type repository interface {
+	StartLesson(ctx context.Context, userID, lessonID int64) error
+	GetProgress(ctx context.Context, userID, lessonID int64) (*UserLessonProgress, error)
+	UpdateStep(ctx context.Context, userID, lessonID int64, currentStep int) error
+	CompleteLesson(ctx context.Context, userID, lessonID int64, score int) error
+	UpdateCourseProgress(ctx context.Context, userID, lessonID int64) error
 }
 
-func NewService(repository *Repository) *Service {
+type Service struct {
+	repository repository
+}
+
+func NewService(repository repository) *Service {
 	return &Service{
 		repository: repository,
 	}
@@ -39,6 +47,14 @@ func (s *Service) GetProgress(
 
 	if err != nil {
 		return nil, err
+	}
+
+	if progress == nil {
+		return &ProgressResponse{
+			Status:      "not_started",
+			CurrentStep: 0,
+			Score:       0,
+		}, nil
 	}
 
 	return &ProgressResponse{

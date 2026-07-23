@@ -4,14 +4,14 @@ import (
 	"context"
 
 	"github.com/NickFinchD/chinese-learning-api/internal/words"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewRepository(db *pgx.Conn) *Repository {
+func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{
 		db: db,
 	}
@@ -58,7 +58,7 @@ func (r *Repository) List(ctx context.Context, userID int64) ([]words.Word, erro
 
 	defer rows.Close()
 
-	var result []words.Word
+	result := make([]words.Word, 0)
 
 	for rows.Next() {
 

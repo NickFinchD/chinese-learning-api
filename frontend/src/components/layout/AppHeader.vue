@@ -3,7 +3,7 @@
     class="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6"
   >
     <div class="text-xl font-bold text-blue-600">
-      🇨🇳 Chinese Learning
+      Wojiao
     </div>
 
     <div class="flex items-center gap-4">
@@ -15,7 +15,7 @@
         class="rounded-lg bg-red-500 px-3 py-2 text-white transition hover:bg-red-600"
         @click="onLogout"
       >
-        Logout
+        Выйти
       </button>
     </div>
   </header>

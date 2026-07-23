@@ -5,14 +5,14 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewRepository(db *pgx.Conn) *Repository {
+func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{
 		db: db,
 	}
@@ -36,6 +36,7 @@ func (r *Repository) GetByIDs(ctx context.Context, ids []int64) ([]Quiz, error) 
 		SELECT
 			id,
 			question,
+			hsk_level,
 			created_at,
 			updated_at
 		FROM quizzes
@@ -49,7 +50,7 @@ func (r *Repository) GetByIDs(ctx context.Context, ids []int64) ([]Quiz, error) 
 
 	defer rows.Close()
 
-	var quizzes []Quiz
+	quizzes := make([]Quiz, 0)
 
 	for rows.Next() {
 
@@ -58,6 +59,7 @@ func (r *Repository) GetByIDs(ctx context.Context, ids []int64) ([]Quiz, error) 
 		err := rows.Scan(
 			&quiz.ID,
 			&quiz.Question,
+			&quiz.HSKLevel,
 			&quiz.CreatedAt,
 			&quiz.UpdatedAt,
 		)
@@ -145,7 +147,7 @@ func (r *Repository) loadOptions(ctx context.Context, quizzes []Quiz) error {
 }
 func (r *Repository) GetAll(ctx context.Context) ([]Quiz, error) {
 	rows, err := r.db.Query(ctx, `
-		SELECT id, question, created_at, updated_at
+		SELECT id, question, hsk_level, created_at, updated_at
 		FROM quizzes
 		ORDER BY id
 	`)
@@ -154,7 +156,7 @@ func (r *Repository) GetAll(ctx context.Context) ([]Quiz, error) {
 	}
 	defer rows.Close()
 
-	var quizzes []Quiz
+	quizzes := make([]Quiz, 0)
 
 	for rows.Next() {
 		var quiz Quiz
@@ -162,6 +164,47 @@ func (r *Repository) GetAll(ctx context.Context) ([]Quiz, error) {
 		if err := rows.Scan(
 			&quiz.ID,
 			&quiz.Question,
+			&quiz.HSKLevel,
+			&quiz.CreatedAt,
+			&quiz.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+
+		quizzes = append(quizzes, quiz)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if err := r.loadOptions(ctx, quizzes); err != nil {
+		return nil, err
+	}
+
+	return quizzes, nil
+}
+func (r *Repository) GetByHSKLevel(ctx context.Context, hsk int16) ([]Quiz, error) {
+	rows, err := r.db.Query(ctx, `
+		SELECT id, question, hsk_level, created_at, updated_at
+		FROM quizzes
+		WHERE hsk_level = $1
+		ORDER BY id
+	`, hsk)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	quizzes := make([]Quiz, 0)
+
+	for rows.Next() {
+		var quiz Quiz
+
+		if err := rows.Scan(
+			&quiz.ID,
+			&quiz.Question,
+			&quiz.HSKLevel,
 			&quiz.CreatedAt,
 			&quiz.UpdatedAt,
 		); err != nil {
@@ -185,12 +228,13 @@ func (r *Repository) GetByID(ctx context.Context, id int64) (*Quiz, error) {
 	var quiz Quiz
 
 	err := r.db.QueryRow(ctx, `
-		SELECT id, question, created_at, updated_at
+		SELECT id, question, hsk_level, created_at, updated_at
 		FROM quizzes
 		WHERE id = $1
 	`, id).Scan(
 		&quiz.ID,
 		&quiz.Question,
+		&quiz.HSKLevel,
 		&quiz.CreatedAt,
 		&quiz.UpdatedAt,
 	)
@@ -217,9 +261,10 @@ func (r *Repository) Create(ctx context.Context, quiz Quiz) (*Quiz, error) {
 	err = tx.QueryRow(ctx, `
 		INSERT INTO quizzes (question)
 		VALUES ($1)
-		RETURNING id, created_at, updated_at
+		RETURNING id, hsk_level, created_at, updated_at
 	`, quiz.Question).Scan(
 		&quiz.ID,
+		&quiz.HSKLevel,
 		&quiz.CreatedAt,
 		&quiz.UpdatedAt,
 	)

@@ -1,19 +1,22 @@
 <template>
   <WordStep
     v-if="step.step_type === 'word' && step.data"
+    :key="step.id"
     :word="step.data"
   />
 
-<QuizStep
-  v-else-if="step.step_type === 'quiz' && step.data"
-  :quiz="step.data"
-/>
+  <QuizStep
+    v-else-if="step.step_type === 'quiz' && step.data"
+    :key="step.id"
+    :quiz="step.data"
+    @answered="$emit('answered', $event)"
+  />
 
   <div
     v-else
     class="rounded-xl border border-red-200 bg-red-50 p-6 text-red-700"
   >
-    Unknown lesson step: {{ step.step_type }}
+    Неизвестный тип шага: {{ step.step_type }}
   </div>
 </template>
 
@@ -25,5 +28,9 @@ import type { LessonStep } from '@/types/lesson'
 
 defineProps<{
   step: LessonStep
+}>()
+
+defineEmits<{
+  (e: 'answered', correct: boolean): void
 }>()
 </script>

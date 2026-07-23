@@ -11,11 +11,13 @@
     >
       <label
         class="flex cursor-pointer items-center gap-3 rounded-lg border p-3 hover:bg-gray-50"
+        :class="{ 'cursor-not-allowed opacity-60': result !== null }"
       >
         <input
           v-model="selected"
           type="radio"
           :value="option.id"
+          :disabled="result !== null"
         >
 
         {{ option.text }}
@@ -23,10 +25,11 @@
     </div>
 
     <button
-      class="mt-6 rounded bg-blue-600 px-5 py-2 text-white"
+      class="mt-6 rounded bg-blue-600 px-5 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
+      :disabled="selected === null || result !== null"
       @click="check"
     >
-      Check
+      Проверить
     </button>
 
     <div
@@ -37,14 +40,14 @@
         v-if="result"
         class="text-green-600"
       >
-        ✅ Correct!
+        ✅ Верно!
       </span>
 
       <span
         v-else
         class="text-red-600"
       >
-        ❌ Wrong
+        ❌ Неверно
       </span>
     </div>
   </div>
@@ -60,11 +63,15 @@ const props = defineProps<{
   quiz: Quiz
 }>()
 
+const emit = defineEmits<{
+  (e: 'answered', correct: boolean): void
+}>()
+
 const selected = ref<number | null>(null)
 const result = ref<boolean | null>(null)
 
 async function check() {
-  if (selected.value === null) {
+  if (selected.value === null || result.value !== null) {
     return
   }
 
@@ -75,6 +82,8 @@ async function check() {
     )
 
     result.value = response.correct
+
+    emit('answered', response.correct)
   } catch (error) {
     console.error('Failed to check answer:', error)
   }

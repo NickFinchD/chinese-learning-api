@@ -39,6 +39,7 @@ func (s *Service) GetByID(ctx context.Context, id int64) (*LessonResponse, error
 
 	return &LessonResponse{
 		ID:           lesson.ID,
+		CourseID:     lesson.CourseID,
 		Title:        lesson.Title,
 		Description:  lesson.Description,
 		LessonNumber: lesson.LessonNumber,

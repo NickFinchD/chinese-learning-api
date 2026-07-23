@@ -10,8 +10,12 @@ import { useAuthStore } from '@/stores/auth'
 
 import CoursesPage from '@/pages/CoursesPage.vue'
 import ReviewPage from '@/pages/ReviewPage.vue'
-import SavedWordsPage from '@/pages/SavedWordsPage.vue'
+import VocabularyPage from '@/pages/VocabularyPage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
+
+import TestsPage from '@/pages/TestsPage.vue'
+import GrammarTestPage from '@/pages/GrammarTestPage.vue'
+import WordTrainingPage from '@/pages/WordTrainingPage.vue'
 
 import CoursePage from '@/pages/CoursePage.vue'
 import LessonPage from '@/pages/LessonPage.vue'
@@ -66,9 +70,24 @@ const router = createRouter({
     component: ReviewPage,
   },
   {
-    path: 'saved',
-    name: 'saved-words',
-    component: SavedWordsPage,
+    path: 'vocabulary',
+    name: 'vocabulary',
+    component: VocabularyPage,
+  },
+  {
+    path: 'tests',
+    name: 'tests',
+    component: TestsPage,
+  },
+  {
+    path: 'tests/grammar',
+    name: 'grammar-test',
+    component: GrammarTestPage,
+  },
+  {
+    path: 'tests/words',
+    name: 'word-training',
+    component: WordTrainingPage,
   },
   {
   path: 'lessons/:id',

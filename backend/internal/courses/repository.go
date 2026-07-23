@@ -3,14 +3,14 @@ package courses
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Repository struct {
-	db *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewRepository(db *pgx.Conn) *Repository {
+func NewRepository(db *pgxpool.Pool) *Repository {
 	return &Repository{
 		db: db,
 	}
@@ -39,7 +39,7 @@ func (r *Repository) List(ctx context.Context) ([]Course, error) {
 
 	defer rows.Close()
 
-	var courses []Course
+	courses := make([]Course, 0)
 
 	for rows.Next() {
 
@@ -117,7 +117,7 @@ func (r *Repository) GetLessons(ctx context.Context, courseID int64) ([]LessonDT
 
 	defer rows.Close()
 
-	var lessons []LessonDTO
+	lessons := make([]LessonDTO, 0)
 
 	for rows.Next() {
 

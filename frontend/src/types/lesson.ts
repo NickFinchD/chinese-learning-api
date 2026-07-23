@@ -33,6 +33,7 @@ export type LessonStep =
 
 export interface Lesson {
   id: number
+  course_id: number
   title: string
   description: string
   lesson_number: number

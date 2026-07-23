@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"log"
 	"net/http"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/NickFinchD/chinese-learning-api/internal/auth"
 	"github.com/NickFinchD/chinese-learning-api/internal/courses"
 	"github.com/NickFinchD/chinese-learning-api/internal/database"
+	"github.com/NickFinchD/chinese-learning-api/internal/learning"
 	"github.com/NickFinchD/chinese-learning-api/internal/lessons"
 	"github.com/NickFinchD/chinese-learning-api/internal/progress"
 	"github.com/NickFinchD/chinese-learning-api/internal/quizzes"
@@ -27,7 +27,7 @@ func main() {
 
 	// Подключаемся к БД
 	db := database.Connect(cfg)
-	defer db.Close(context.Background())
+	defer db.Close()
 
 	// =========================
 	// Dependencies
@@ -73,6 +73,10 @@ func main() {
 		wordsRepository,
 	)
 	reviewHandler := review.NewHandler(reviewService)
+
+	learningRepository := learning.NewRepository(db)
+	learningService := learning.NewService(learningRepository)
+	learningHandler := learning.NewHandler(learningService)
 	// =========================
 	// Router
 	// =========================
@@ -149,12 +153,18 @@ func main() {
 		authorized.Group("/reviews"),
 		reviewHandler,
 	)
+	quizzes.RegisterRoutes(
+		authorized.Group("/quizzes"),
+		quizzesHandler,
+	)
+	learning.RegisterRoutes(
+		authorized.Group("/learning"),
+		learningHandler,
+	)
+
 	// =========================
 	// Start server
 	// =========================
-	quizzesGroup := router.Group("/quizzes")
-
-	quizzes.RegisterRoutes(quizzesGroup, quizzesHandler)
 	if err := router.Run(":" + cfg.App.Port); err != nil {
 		log.Fatalf("failed to start server: %v", err)
 	}
