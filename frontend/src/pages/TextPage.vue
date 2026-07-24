@@ -63,24 +63,25 @@
           <span
             v-for="(segment, index) in segments"
             :key="index"
-            :class="segment.word ? 'relative inline-block cursor-pointer border-b border-dotted ' + (isSaved(segment.word.id) ? 'border-[var(--color-accent)]' : 'border-[var(--color-primary)]') : ''"
+            :class="segmentClass(segment)"
             @click="onSegmentClick(segment, index, $event)"
           >
             {{ segment.text }}
 
             <span
-              v-if="segment.word && activeIndex === index"
+              v-if="(segment.word || segment.name) && activeIndex === index"
               class="absolute bottom-full left-1/2 z-10 mb-2 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-normal text-white shadow-lg"
             >
-              <span>{{ segment.word.pinyin }} — {{ segment.word.translation }}</span>
+              <span>{{ (segment.word ?? segment.name)!.pinyin }} — {{ (segment.word ?? segment.name)!.translation }}</span>
 
               <AudioButton
-                :text="segment.word.hanzi"
+                :text="segment.text"
                 size="sm"
                 class="!text-[var(--color-mint)] hover:!bg-white/10"
               />
 
               <button
+                v-if="segment.word"
                 type="button"
                 class="leading-none"
                 :class="isSaved(segment.word.id) ? 'text-[var(--color-accent)]' : 'text-gray-400 hover:text-white'"
@@ -144,6 +145,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 import { getWords } from '@/services/words'
+import { getNames } from '@/services/names'
 import { useSavedWordsStore } from '@/stores/savedWords'
 import { useTextsStore } from '@/stores/texts'
 import { isSpeechSupported, useChineseVoiceAvailable } from '@/utils/speech'
@@ -152,10 +154,28 @@ import AudioButton from '@/components/base/AudioButton.vue'
 import BaseSpinner from '@/components/base/BaseSpinner.vue'
 
 import type { Word } from '@/types/word'
+import type { ProperName } from '@/types/name'
 
 interface Segment {
   text: string
   word: Word | null
+  // Proper nouns (people's names, book titles): get the same hover hint as
+  // a dictionary word, but deliberately aren't part of `words` — no save
+  // button, never trainable/quizzable. See the `names` table/endpoint.
+  name: ProperName | null
+}
+
+function segmentClass(segment: Segment): string {
+  if (segment.word) {
+    return 'relative inline-block cursor-pointer border-b border-dotted ' +
+      (isSaved(segment.word.id) ? 'border-[var(--color-accent)]' : 'border-[var(--color-primary)]')
+  }
+
+  if (segment.name) {
+    return 'relative inline-block cursor-pointer border-b border-dotted border-gray-400 dark:border-gray-500'
+  }
+
+  return ''
 }
 
 const route = useRoute()
@@ -169,7 +189,7 @@ function isSaved(wordId: number) {
 const activeIndex = ref<number | null>(null)
 
 function onSegmentClick(segment: Segment, index: number, event: MouseEvent) {
-  if (!segment.word) {
+  if (!segment.word && !segment.name) {
     return
   }
 
@@ -245,11 +265,14 @@ const showPinyin = ref(false)
 const showTranslation = ref(false)
 
 const wordMap = ref(new Map<string, Word>())
-const maxWordLength = ref(1)
+const nameMap = ref(new Map<string, ProperName>())
+const maxMatchLength = ref(1)
 
 // Greedy longest-match tokenizer: at each position, try the longest
 // substring first and fall back to shorter ones, since Chinese text has
-// no spaces between words.
+// no spaces between words. Checks the real dictionary first, then the
+// proper-noun list, so a hanzi that somehow existed in both would resolve
+// to the trainable word.
 const segments = computed<Segment[]>(() => {
   const hanzi = texts.current?.hanzi
 
@@ -266,13 +289,14 @@ const segments = computed<Segment[]>(() => {
 
     let matched = false
 
-    for (let len = Math.min(maxWordLength.value, chars.length - i); len >= 1; len--) {
+    for (let len = Math.min(maxMatchLength.value, chars.length - i); len >= 1; len--) {
 
       const candidate = chars.slice(i, i + len).join('')
       const word = wordMap.value.get(candidate)
+      const name = nameMap.value.get(candidate)
 
-      if (word) {
-        result.push({ text: candidate, word })
+      if (word || name) {
+        result.push({ text: candidate, word: word ?? null, name: word ? null : (name ?? null) })
         i += len
         matched = true
         break
@@ -280,7 +304,7 @@ const segments = computed<Segment[]>(() => {
     }
 
     if (!matched) {
-      result.push({ text: chars[i], word: null })
+      result.push({ text: chars[i], word: null, name: null })
       i += 1
     }
   }
@@ -296,11 +320,15 @@ onMounted(async () => {
   savedWords.loadSavedWords()
 
   try {
-    const response = await getWords()
-    const words = response.data ?? []
+    const [wordsResponse, namesResponse] = await Promise.all([getWords(), getNames()])
+    const words = wordsResponse.data ?? []
+    const properNames = namesResponse.data ?? []
 
     wordMap.value = new Map(words.map(word => [word.hanzi, word]))
-    maxWordLength.value = words.reduce((max, word) => Math.max(max, [...word.hanzi].length), 1)
+    nameMap.value = new Map(properNames.map(name => [name.hanzi, name]))
+
+    maxMatchLength.value = [...words, ...properNames]
+      .reduce((max, entry) => Math.max(max, [...entry.hanzi].length), 1)
   } catch (error) {
     console.error('Failed to load dictionary for hover hints:', error)
   }

@@ -15,6 +15,7 @@ import (
 	"github.com/NickFinchD/chinese-learning-api/internal/learning"
 	"github.com/NickFinchD/chinese-learning-api/internal/lessons"
 	"github.com/NickFinchD/chinese-learning-api/internal/mockexam"
+	"github.com/NickFinchD/chinese-learning-api/internal/names"
 	"github.com/NickFinchD/chinese-learning-api/internal/progress"
 	"github.com/NickFinchD/chinese-learning-api/internal/quizzes"
 	"github.com/NickFinchD/chinese-learning-api/internal/savedwords"
@@ -105,6 +106,10 @@ func main() {
 	learningRepository := learning.NewRepository(db)
 	learningService := learning.NewService(learningRepository)
 	learningHandler := learning.NewHandler(learningService)
+
+	namesRepository := names.NewRepository(db)
+	namesService := names.NewService(namesRepository)
+	namesHandler := names.NewHandler(namesService)
 	// =========================
 	// Router
 	// =========================
@@ -207,6 +212,10 @@ func main() {
 	mockexam.RegisterRoutes(
 		authorized.Group("/mock-exams"),
 		mockExamHandler,
+	)
+	names.RegisterRoutes(
+		authorized.Group("/names"),
+		namesHandler,
 	)
 
 	// =========================
