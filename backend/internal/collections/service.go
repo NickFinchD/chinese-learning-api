@@ -9,12 +9,14 @@ import (
 type repository interface {
 	Create(ctx context.Context, userID int64, name string) (*Collection, error)
 	List(ctx context.Context, userID int64) ([]Collection, error)
+	ListCurated(ctx context.Context) ([]Collection, error)
 	GetByID(ctx context.Context, userID, collectionID int64) (*Collection, error)
 	ListWords(ctx context.Context, collectionID int64) ([]words.Word, error)
 	Rename(ctx context.Context, userID, collectionID int64, name string) error
 	Delete(ctx context.Context, userID, collectionID int64) error
 	AddWord(ctx context.Context, userID, collectionID, wordID int64) error
 	RemoveWord(ctx context.Context, userID, collectionID, wordID int64) error
+	CloneForUser(ctx context.Context, userID, curatedID int64) (*Collection, error)
 }
 
 type Service struct {
@@ -39,6 +41,14 @@ func (s *Service) Create(ctx context.Context, userID int64, name string) (*Colle
 
 func (s *Service) List(ctx context.Context, userID int64) ([]Collection, error) {
 	return s.repository.List(ctx, userID)
+}
+
+func (s *Service) ListCurated(ctx context.Context) ([]Collection, error) {
+	return s.repository.ListCurated(ctx)
+}
+
+func (s *Service) SaveCurated(ctx context.Context, userID, curatedID int64) (*Collection, error) {
+	return s.repository.CloneForUser(ctx, userID, curatedID)
 }
 
 // GetByID returns nil (no error) when the collection doesn't exist or isn't

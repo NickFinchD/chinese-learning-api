@@ -6,8 +6,10 @@ import {
   deleteCollection,
   getCollection,
   getCollections,
+  getCuratedCollections,
   removeWordFromCollection,
   renameCollection,
+  saveCuratedCollection,
 } from '@/services/collections'
 
 import type { Collection, CollectionDetail } from '@/types/collection'
@@ -16,10 +18,28 @@ import type { Word } from '@/types/word'
 export const useCollectionsStore = defineStore('collections', {
   state: () => ({
     items: [] as Collection[],
+    curated: [] as Collection[],
     current: null as CollectionDetail | null,
     loading: false,
+    loadingCurated: false,
     loadingCurrent: false,
   }),
+
+  getters: {
+    // Maps a curated collection's id to the user's own cloned copy, if any —
+    // lets the UI show "already saved" instead of a "save" button per item.
+    savedCopyByCuratedId(state): Record<number, Collection> {
+      const map: Record<number, Collection> = {}
+
+      for (const item of state.items) {
+        if (item.source_collection_id !== null) {
+          map[item.source_collection_id] = item
+        }
+      }
+
+      return map
+    },
+  },
 
   actions: {
     async loadCollections() {
@@ -32,6 +52,26 @@ export const useCollectionsStore = defineStore('collections', {
       } finally {
         this.loading = false
       }
+    },
+
+    async loadCurated() {
+      this.loadingCurated = true
+
+      try {
+        const response = await getCuratedCollections()
+
+        this.curated = response.data
+      } finally {
+        this.loadingCurated = false
+      }
+    },
+
+    async saveCurated(id: number) {
+      const response = await saveCuratedCollection(id)
+
+      this.items.unshift(response.data)
+
+      return response.data
     },
 
     async loadCollection(id: number) {

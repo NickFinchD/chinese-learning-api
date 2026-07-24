@@ -41,6 +41,8 @@ func (r *Repository) List(ctx context.Context, userID int64) ([]Collection, erro
 		SELECT
 			wc.id,
 			wc.name,
+			wc.is_curated,
+			wc.source_collection_id,
 			wc.created_at,
 			wc.updated_at,
 			COUNT(wci.id) AS word_count
@@ -63,7 +65,49 @@ func (r *Repository) List(ctx context.Context, userID int64) ([]Collection, erro
 
 		var c Collection
 
-		if err := rows.Scan(&c.ID, &c.Name, &c.CreatedAt, &c.UpdatedAt, &c.WordCount); err != nil {
+		if err := rows.Scan(&c.ID, &c.Name, &c.IsCurated, &c.SourceCollectionID, &c.CreatedAt, &c.UpdatedAt, &c.WordCount); err != nil {
+			return nil, err
+		}
+
+		result = append(result, c)
+	}
+
+	return result, rows.Err()
+}
+
+// ListCurated returns the shared starter collections (user_id IS NULL),
+// visible to every user as suggestions.
+func (r *Repository) ListCurated(ctx context.Context) ([]Collection, error) {
+
+	rows, err := r.db.Query(ctx, `
+		SELECT
+			wc.id,
+			wc.name,
+			wc.is_curated,
+			wc.source_collection_id,
+			wc.created_at,
+			wc.updated_at,
+			COUNT(wci.id) AS word_count
+		FROM word_collections wc
+		LEFT JOIN word_collection_items wci ON wci.collection_id = wc.id
+		WHERE wc.is_curated = TRUE
+		GROUP BY wc.id
+		ORDER BY wc.name
+	`)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	result := make([]Collection, 0)
+
+	for rows.Next() {
+
+		var c Collection
+
+		if err := rows.Scan(&c.ID, &c.Name, &c.IsCurated, &c.SourceCollectionID, &c.CreatedAt, &c.UpdatedAt, &c.WordCount); err != nil {
 			return nil, err
 		}
 
@@ -81,6 +125,8 @@ func (r *Repository) GetByID(ctx context.Context, userID, collectionID int64) (*
 		SELECT
 			wc.id,
 			wc.name,
+			wc.is_curated,
+			wc.source_collection_id,
 			wc.created_at,
 			wc.updated_at,
 			COUNT(wci.id) AS word_count
@@ -88,7 +134,7 @@ func (r *Repository) GetByID(ctx context.Context, userID, collectionID int64) (*
 		LEFT JOIN word_collection_items wci ON wci.collection_id = wc.id
 		WHERE wc.user_id = $1 AND wc.id = $2
 		GROUP BY wc.id
-	`, userID, collectionID).Scan(&c.ID, &c.Name, &c.CreatedAt, &c.UpdatedAt, &c.WordCount)
+	`, userID, collectionID).Scan(&c.ID, &c.Name, &c.IsCurated, &c.SourceCollectionID, &c.CreatedAt, &c.UpdatedAt, &c.WordCount)
 
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -98,6 +144,54 @@ func (r *Repository) GetByID(ctx context.Context, userID, collectionID int64) (*
 	}
 
 	return &c, nil
+}
+
+// CloneForUser copies a curated collection's name and words into a new,
+// independent collection owned by userID (edits to the copy never touch the
+// shared original). Returns pgx.ErrNoRows if curatedID isn't a curated
+// collection.
+func (r *Repository) CloneForUser(ctx context.Context, userID, curatedID int64) (*Collection, error) {
+
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	var name string
+
+	err = tx.QueryRow(ctx, `
+		SELECT name FROM word_collections WHERE id = $1 AND is_curated = TRUE
+	`, curatedID).Scan(&name)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var newID int64
+
+	err = tx.QueryRow(ctx, `
+		INSERT INTO word_collections (user_id, name, source_collection_id)
+		VALUES ($1, $2, $3)
+		RETURNING id
+	`, userID, name, curatedID).Scan(&newID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO word_collection_items (collection_id, word_id)
+		SELECT $1, word_id FROM word_collection_items WHERE collection_id = $2
+	`, newID, curatedID); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+
+	return r.GetByID(ctx, userID, newID)
 }
 
 func (r *Repository) ListWords(ctx context.Context, collectionID int64) ([]words.Word, error) {

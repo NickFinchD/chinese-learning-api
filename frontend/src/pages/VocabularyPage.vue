@@ -5,21 +5,23 @@
     </h1>
 
     <div class="mb-6 flex flex-wrap items-center gap-4">
-      <BaseInput
-        v-model="vocabulary.search"
-        placeholder="Поиск по иероглифу, пиньиню или переводу"
-        class="max-w-xs"
-        @update:model-value="onSearchChange"
-      />
+      <template v-if="tab !== 'collections'">
+        <BaseInput
+          v-model="vocabulary.search"
+          placeholder="Поиск по иероглифу, пиньиню или переводу"
+          class="max-w-xs"
+          @update:model-value="onSearchChange"
+        />
 
-      <BaseSelect
-        v-model="vocabulary.hsk"
-        class="w-56"
-        :options="hskOptions"
-        @update:model-value="vocabulary.loadWords()"
-      />
+        <BaseSelect
+          v-model="vocabulary.hsk"
+          class="w-56"
+          :options="hskOptions"
+          @update:model-value="vocabulary.loadWords()"
+        />
+      </template>
 
-      <div class="ml-auto flex gap-2 rounded-xl border border-white/50 bg-white/30 p-1 backdrop-blur-md dark:border-white/10 dark:bg-white/5">
+      <div class="ml-auto flex flex-wrap gap-2 rounded-xl border border-white/50 bg-white/30 p-1 backdrop-blur-md dark:border-white/10 dark:bg-white/5">
         <button
           class="rounded-lg px-4 py-2 text-sm font-medium transition"
           :class="tab === 'all' ? 'bg-white/80 shadow-sm dark:bg-white/15 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
@@ -51,10 +53,167 @@
         >
           На изучении
         </button>
+
+        <button
+          class="rounded-lg px-4 py-2 text-sm font-medium transition"
+          :class="tab === 'collections' ? 'bg-white/80 shadow-sm dark:bg-white/15 dark:text-white' : 'text-gray-500 dark:text-gray-400'"
+          @click="onShowCollections"
+        >
+          Подборки
+        </button>
       </div>
     </div>
 
-    <template v-if="tab === 'progress'">
+    <template v-if="tab === 'collections'">
+      <form
+        class="mb-8 flex max-w-md gap-2"
+        @submit.prevent="onCreateCollection"
+      >
+        <BaseInput
+          v-model="newCollectionListName"
+          placeholder="Название новой подборки"
+        />
+
+        <button
+          type="submit"
+          class="shrink-0 rounded-xl bg-[var(--color-primary)] px-4 py-3 font-semibold text-white shadow-lg shadow-[var(--color-primary)]/30 transition hover:bg-[var(--color-primary)]/90 disabled:cursor-not-allowed disabled:opacity-50"
+          :disabled="!newCollectionListName.trim()"
+        >
+          <AppIcon name="plus" />
+        </button>
+      </form>
+
+      <h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+        Мои подборки
+      </h2>
+
+      <div
+        v-if="collections.loading"
+        class="mb-8 flex items-center gap-2 text-gray-500 dark:text-gray-400"
+      >
+        <BaseSpinner />
+        Загрузка...
+      </div>
+
+      <div
+        v-else-if="collections.items.length === 0"
+        class="mb-8 text-gray-500 dark:text-gray-400"
+      >
+        У вас пока нет своих подборок. Создайте одну выше или сохраните себе одну из рекомендованных ниже.
+      </div>
+
+      <div
+        v-else
+        class="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+      >
+        <RouterLink
+          v-for="(collection, index) in collections.items"
+          :key="collection.id"
+          :to="`/app/vocabulary/collections/${collection.id}`"
+          class="animate-fade-in-up group relative rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-white/5"
+          :style="{ animationDelay: `${Math.min(index * 40, 300)}ms` }"
+        >
+          <div class="mb-3 flex items-center gap-2 pr-14">
+            <AppIcon
+              name="folder"
+              class="text-[var(--color-primary)]"
+            />
+
+            <span class="truncate text-lg font-semibold text-gray-900 dark:text-white">
+              {{ collection.name }}
+            </span>
+          </div>
+
+          <div class="text-gray-500 dark:text-gray-400">
+            {{ collection.word_count }} {{ wordLabel(collection.word_count) }}
+          </div>
+
+          <div class="absolute right-4 top-4 flex gap-1 opacity-0 transition group-hover:opacity-100">
+            <button
+              type="button"
+              title="Переименовать"
+              class="rounded-lg p-1.5 text-gray-400 hover:bg-white/50 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-200"
+              @click.prevent.stop="onRenameCollection(collection.id, collection.name)"
+            >
+              <AppIcon
+                name="pencil"
+                :size="16"
+              />
+            </button>
+
+            <button
+              type="button"
+              title="Удалить"
+              class="rounded-lg p-1.5 text-gray-400 hover:bg-red-50 hover:text-red-600 dark:text-gray-500 dark:hover:bg-red-500/10 dark:hover:text-red-400"
+              @click.prevent.stop="onDeleteCollection(collection.id)"
+            >
+              <AppIcon
+                name="trash"
+                :size="16"
+              />
+            </button>
+          </div>
+        </RouterLink>
+      </div>
+
+      <h2 class="mb-3 text-lg font-semibold text-gray-900 dark:text-white">
+        Рекомендованные подборки
+      </h2>
+
+      <div
+        v-if="collections.loadingCurated"
+        class="flex items-center gap-2 text-gray-500 dark:text-gray-400"
+      >
+        <BaseSpinner />
+        Загрузка...
+      </div>
+
+      <div
+        v-else
+        class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+      >
+        <div
+          v-for="(collection, index) in collections.curated"
+          :key="collection.id"
+          class="animate-fade-in-up rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5"
+          :style="{ animationDelay: `${Math.min(index * 40, 300)}ms` }"
+        >
+          <div class="mb-3 flex items-center gap-2">
+            <AppIcon
+              name="folder"
+              class="text-[var(--color-primary)]"
+            />
+
+            <span class="truncate text-lg font-semibold text-gray-900 dark:text-white">
+              {{ collection.name }}
+            </span>
+          </div>
+
+          <div class="mb-4 text-gray-500 dark:text-gray-400">
+            {{ collection.word_count }} {{ wordLabel(collection.word_count) }}
+          </div>
+
+          <RouterLink
+            v-if="collections.savedCopyByCuratedId[collection.id]"
+            :to="`/app/vocabulary/collections/${collections.savedCopyByCuratedId[collection.id].id}`"
+            class="block w-full rounded-full border border-white/50 px-4 py-2 text-center text-sm font-semibold text-gray-600 backdrop-blur-md transition hover:bg-white/40 dark:border-white/10 dark:text-gray-300 dark:hover:bg-white/10"
+          >
+            Уже сохранено
+          </RouterLink>
+
+          <button
+            v-else
+            type="button"
+            class="w-full rounded-full bg-[var(--color-primary)] px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-[var(--color-primary)]/30 transition hover:bg-[var(--color-primary)]/90"
+            @click="onSaveCurated(collection.id)"
+          >
+            Сохранить себе
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <template v-else-if="tab === 'progress'">
       <div
         v-if="learning.loadingInProgress"
         class="flex items-center gap-2 text-gray-500 dark:text-gray-400"
@@ -239,6 +398,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import { useCollectionsStore } from '@/stores/collections'
 import { useLearningStore } from '@/stores/learning'
@@ -253,6 +413,9 @@ import BaseSpinner from '@/components/base/BaseSpinner.vue'
 
 import type { Word } from '@/types/word'
 
+const route = useRoute()
+const router = useRouter()
+
 const vocabulary = useVocabularyStore()
 const savedWords = useSavedWordsStore()
 const learning = useLearningStore()
@@ -260,6 +423,7 @@ const collections = useCollectionsStore()
 
 const openMenuWordId = ref<number | null>(null)
 const newCollectionName = ref('')
+const newCollectionListName = ref('')
 
 function toggleCollectionMenu(wordId: number) {
   openMenuWordId.value = openMenuWordId.value === wordId ? null : wordId
@@ -285,7 +449,57 @@ async function onCreateAndAdd(word: Word) {
   openMenuWordId.value = null
 }
 
-const tab = ref<'all' | 'saved' | 'learned' | 'progress'>('all')
+function wordLabel(count: number): string {
+  const mod10 = count % 10
+  const mod100 = count % 100
+
+  if (mod10 === 1 && mod100 !== 11) {
+    return 'слово'
+  }
+
+  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) {
+    return 'слова'
+  }
+
+  return 'слов'
+}
+
+async function onCreateCollection() {
+  const name = newCollectionListName.value.trim()
+
+  if (!name) {
+    return
+  }
+
+  await collections.create(name)
+  newCollectionListName.value = ''
+}
+
+async function onRenameCollection(id: number, currentName: string) {
+  const name = window.prompt('Новое название подборки', currentName)
+
+  if (!name || !name.trim() || name.trim() === currentName) {
+    return
+  }
+
+  await collections.rename(id, name.trim())
+}
+
+async function onDeleteCollection(id: number) {
+  if (!window.confirm('Удалить подборку? Слова из словаря удалены не будут.')) {
+    return
+  }
+
+  await collections.remove(id)
+}
+
+async function onSaveCurated(id: number) {
+  await collections.saveCurated(id)
+}
+
+type Tab = 'all' | 'saved' | 'learned' | 'progress' | 'collections'
+
+const tab = ref<Tab>(route.query.tab === 'collections' ? 'collections' : 'all')
 
 const hskOptions = [
   { value: 0, label: 'Любой уровень HSK' },
@@ -300,14 +514,19 @@ function onSearchChange() {
   searchTimeout = setTimeout(() => vocabulary.loadWords(), 300)
 }
 
+function setTab(value: Tab) {
+  tab.value = value
+  router.replace({ query: value === 'all' ? {} : { tab: value } })
+}
+
 function onShowSaved() {
-  tab.value = 'saved'
+  setTab('saved')
 
   savedWords.loadSavedWords()
 }
 
 function onShowAll() {
-  tab.value = 'all'
+  setTab('all')
 
   if (vocabulary.items.length === 0) {
     vocabulary.loadWords()
@@ -315,15 +534,22 @@ function onShowAll() {
 }
 
 function onShowLearned() {
-  tab.value = 'learned'
+  setTab('learned')
 
   learning.loadLearned()
 }
 
 function onShowInProgress() {
-  tab.value = 'progress'
+  setTab('progress')
 
   learning.loadInProgress()
+}
+
+function onShowCollections() {
+  setTab('collections')
+
+  collections.loadCollections()
+  collections.loadCurated()
 }
 
 const loading = computed(() => {
@@ -405,9 +631,15 @@ function formatTimeLeft(nextEligibleAt?: string): string {
 }
 
 onMounted(() => {
-  vocabulary.loadWords()
-  savedWords.loadSavedWords()
   collections.loadCollections()
+
+  if (tab.value === 'collections') {
+    collections.loadCurated()
+  } else {
+    vocabulary.loadWords()
+  }
+
+  savedWords.loadSavedWords()
 
   clockInterval = setInterval(() => {
     now.value = Date.now()

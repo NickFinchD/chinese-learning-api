@@ -1,7 +1,7 @@
 <template>
   <div>
     <RouterLink
-      to="/app/vocabulary/collections"
+      to="/app/vocabulary?tab=collections"
       class="mb-6 inline-flex items-center gap-2 text-gray-500 transition hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
     >
       <AppIcon

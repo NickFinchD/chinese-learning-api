@@ -62,15 +62,15 @@
             />
           </div>
 
-          <div class="flex items-center gap-1.5 text-sm font-medium text-gray-800 dark:text-gray-200">
+          <div class="flex min-w-0 items-center gap-1.5 text-sm font-medium text-gray-800 dark:text-gray-200">
             <AppIcon
               v-if="palette.paletteId === id"
               name="check-circle"
               :size="14"
               filled
-              class="text-[var(--color-primary)]"
+              class="shrink-0 text-[var(--color-primary)]"
             />
-            {{ paletteOption.label }}
+            <span class="truncate">{{ paletteOption.label }}</span>
           </div>
         </button>
       </div>

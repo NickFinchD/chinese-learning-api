@@ -9,6 +9,18 @@ export async function getCollections() {
   return response.data
 }
 
+export async function getCuratedCollections() {
+  const response = await api.get<ApiResponse<Collection[]>>('/collections/curated')
+
+  return response.data
+}
+
+export async function saveCuratedCollection(id: number) {
+  const response = await api.post<ApiResponse<Collection>>(`/collections/${id}/save`)
+
+  return response.data
+}
+
 export async function getCollection(id: number) {
   const response = await api.get<ApiResponse<CollectionDetail>>(`/collections/${id}`)
 

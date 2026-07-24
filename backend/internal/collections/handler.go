@@ -59,6 +59,39 @@ func (h *Handler) List(c *gin.Context) {
 	response.JSON(c, http.StatusOK, list)
 }
 
+func (h *Handler) ListCurated(c *gin.Context) {
+
+	list, err := h.service.ListCurated(c.Request.Context())
+
+	if err != nil {
+		response.Internal(c)
+		return
+	}
+
+	response.JSON(c, http.StatusOK, list)
+}
+
+func (h *Handler) SaveCurated(c *gin.Context) {
+
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+
+	if err != nil {
+		response.BadRequest(c, "invalid collection id")
+		return
+	}
+
+	userID := auth.GetUserID(c)
+
+	collection, err := h.service.SaveCurated(c.Request.Context(), userID, id)
+
+	if err != nil {
+		response.NotFound(c, "curated collection not found")
+		return
+	}
+
+	response.JSON(c, http.StatusCreated, collection)
+}
+
 func (h *Handler) GetByID(c *gin.Context) {
 
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)

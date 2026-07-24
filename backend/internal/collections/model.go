@@ -3,10 +3,12 @@ package collections
 import "time"
 
 type Collection struct {
-	ID        int64     `db:"id" json:"id"`
-	UserID    int64     `db:"user_id" json:"-"`
-	Name      string    `db:"name" json:"name"`
-	WordCount int       `db:"word_count" json:"word_count"`
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+	ID                 int64     `db:"id" json:"id"`
+	UserID             int64     `db:"user_id" json:"-"`
+	Name               string    `db:"name" json:"name"`
+	WordCount          int       `db:"word_count" json:"word_count"`
+	IsCurated          bool      `db:"is_curated" json:"is_curated"`
+	SourceCollectionID *int64    `db:"source_collection_id" json:"source_collection_id"`
+	CreatedAt          time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt          time.Time `db:"updated_at" json:"updated_at"`
 }

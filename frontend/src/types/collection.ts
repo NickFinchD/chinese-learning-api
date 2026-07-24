@@ -4,6 +4,8 @@ export interface Collection {
   id: number
   name: string
   word_count: number
+  is_curated: boolean
+  source_collection_id: number | null
   created_at: string
   updated_at: string
 }

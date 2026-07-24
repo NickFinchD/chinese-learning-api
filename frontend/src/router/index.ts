@@ -11,7 +11,6 @@ import { useAuthStore } from '@/stores/auth'
 
 import CoursesPage from '@/pages/CoursesPage.vue'
 import VocabularyPage from '@/pages/VocabularyPage.vue'
-import CollectionsPage from '@/pages/CollectionsPage.vue'
 import CollectionDetailPage from '@/pages/CollectionDetailPage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
 
@@ -86,11 +85,6 @@ const router = createRouter({
     path: 'vocabulary',
     name: 'vocabulary',
     component: VocabularyPage,
-  },
-  {
-    path: 'vocabulary/collections',
-    name: 'collections',
-    component: CollectionsPage,
   },
   {
     path: 'vocabulary/collections/:id',
