@@ -8,8 +8,10 @@
 // each lesson gets a real, descriptive title ("Существительные 3",
 // "Глаголы 1", ...) instead of a bare "Часть N". Every few batches a
 // dedicated review-only lesson ("Повторение N") is inserted with no new
-// words, just extra word/quiz practice drawn from everything introduced so
-// far — this is what stretches the course length without diluting content.
+// words, just extra quiz practice drawn from everything introduced so far —
+// this is what stretches the course length without diluting content. A word
+// is only ever shown as a flashcard once, the lesson it's introduced in;
+// every review after that is a quiz question, never a re-shown card.
 // Vocabulary quizzes are auto-generated ("Как переводится X?"). There is no
 // grammar-quiz bank for HSK2 (that content is hand-authored per level and
 // out of scope here).
@@ -41,10 +43,9 @@ import (
 const (
 	hskLevel               = 2
 	newWordsPerLesson      = 3
-	wordStepsPerLesson     = 12
-	bonusReviewQuizzes     = 2 // extra quizzes from review words, on top of the guaranteed one-per-new-word
+	bonusReviewQuizzes     = 2 // extra quizzes from already-taught words, on top of the guaranteed one-per-new-word
 	batchesPerReviewLesson = 4
-	reviewLessonWordCount  = 10
+	reviewLessonWordCount  = 10 // pure-review lessons: how many already-taught words get quizzed
 )
 
 // categoryOrder controls both the grouping (grammar words first, content
@@ -151,21 +152,20 @@ func main() {
 
 		newWords := allWords[start:end]
 
+		// Words already taught are never shown as flashcards again — from
+		// here on they only reappear as quiz questions.
 		pool := append([]wordInfo{}, introduced...)
 
 		rng.Shuffle(len(pool), func(i, j int) {
 			pool[i], pool[j] = pool[j], pool[i]
 		})
 
-		fillCount := wordStepsPerLesson - len(newWords)
-		if fillCount > len(pool) {
-			fillCount = len(pool)
-		}
-		if fillCount < 0 {
-			fillCount = 0
+		reviewQuizCount := bonusReviewQuizzes
+		if reviewQuizCount > len(pool) {
+			reviewQuizCount = len(pool)
 		}
 
-		lessonWords := append(append([]wordInfo{}, newWords...), pool[:fillCount]...)
+		reviewQuizWords := pool[:reviewQuizCount]
 
 		category := dominantCategory(newWords)
 
@@ -191,12 +191,12 @@ func main() {
 
 		description := fmt.Sprintf("Новые слова: %s", hanziList)
 
-		if err := createLesson(ctx, db, courseID, lessonNum, title, description, lessonWords,
-			newWords, bonusReviewQuizzes, vocabQuizCache, translationByID, allWordIDs, rng); err != nil {
+		if err := createLesson(ctx, db, courseID, lessonNum, title, description,
+			newWords, reviewQuizWords, vocabQuizCache, translationByID, allWordIDs, rng); err != nil {
 			log.Fatalf("failed to create lesson %d: %v", lessonNum, err)
 		}
 
-		fmt.Printf("Created lesson %d: %s (%d new, %d review)\n", lessonNum, title, len(newWords), fillCount)
+		fmt.Printf("Created lesson %d: %s (%d new, %d review quizzes)\n", lessonNum, title, len(newWords), len(reviewQuizWords))
 
 		introduced = append(introduced, newWords...)
 		lessonNum++
@@ -221,8 +221,10 @@ func main() {
 			reviewTitle := fmt.Sprintf("Повторение %d", reviewCount)
 			reviewDescription := "Повторение изученных слов: больше практики без новой лексики"
 
-			if err := createLesson(ctx, db, courseID, lessonNum, reviewTitle, reviewDescription, reviewWords,
-				reviewWords, 0, vocabQuizCache, translationByID, allWordIDs, rng); err != nil {
+			// No new words here, so no flashcards either — this lesson is
+			// entirely quizzes over words already taught.
+			if err := createLesson(ctx, db, courseID, lessonNum, reviewTitle, reviewDescription,
+				nil, reviewWords, vocabQuizCache, translationByID, allWordIDs, rng); err != nil {
 				log.Fatalf("failed to create review lesson %d: %v", lessonNum, err)
 			}
 
@@ -353,9 +355,8 @@ func createLesson(
 	lessonNum int,
 	title string,
 	description string,
-	lessonWords []wordInfo,
-	newWords []wordInfo, // every one of these gets a quiz — guaranteed practice for what's actually taught this lesson
-	bonusQuizCount int, // extra quizzes drawn from the remaining (review) words
+	newWords []wordInfo, // shown as flashcards (once) and guaranteed a quiz each
+	reviewQuizWords []wordInfo, // already-taught words quizzed for review — never shown as flashcards again
 	vocabQuizCache map[int64]int64,
 	translationByID map[int64]string,
 	allWordIDs []int64,
@@ -381,7 +382,9 @@ func createLesson(
 
 	sortOrder := 1
 
-	for _, w := range lessonWords {
+	// Flashcards only ever appear for words being taught for the first
+	// time — words already introduced are never shown again, only quizzed.
+	for _, w := range newWords {
 
 		_, err := tx.Exec(ctx, `
 			INSERT INTO lesson_steps (lesson_id, step_type, entity_id, sort_order)
@@ -394,29 +397,9 @@ func createLesson(
 		sortOrder++
 	}
 
-	newWordIDs := make(map[int64]bool, len(newWords))
-	for _, w := range newWords {
-		newWordIDs[w.ID] = true
-	}
-
-	reviewOnly := make([]wordInfo, 0, len(lessonWords))
-	for _, w := range lessonWords {
-		if !newWordIDs[w.ID] {
-			reviewOnly = append(reviewOnly, w)
-		}
-	}
-
-	rng.Shuffle(len(reviewOnly), func(i, j int) {
-		reviewOnly[i], reviewOnly[j] = reviewOnly[j], reviewOnly[i]
-	})
-
-	if bonusQuizCount > len(reviewOnly) {
-		bonusQuizCount = len(reviewOnly)
-	}
-
-	// Every new word is guaranteed a quiz; bonus review quizzes are appended
-	// on top so practice never falls short of what was just taught.
-	quizCandidates := append(append([]wordInfo{}, newWords...), reviewOnly[:bonusQuizCount]...)
+	// Every new word is guaranteed a quiz; review quizzes are appended on
+	// top so practice never falls short of what was just taught.
+	quizCandidates := append(append([]wordInfo{}, newWords...), reviewQuizWords...)
 
 	for i := 0; i < len(quizCandidates); i++ {
 

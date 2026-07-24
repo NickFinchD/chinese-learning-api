@@ -1,10 +1,12 @@
 // Command seed (re)generates lessons 2.. for the "HSK 1" course, extending
 // the single hand-authored lesson 1 ("Приветствие") with programmatically
 // assembled practice content: new words are introduced in topical batches
-// (e.g. "Местоимения", "Числа 2") at most 3 at a time, mixed with review
-// words drawn from everything introduced so far, plus vocabulary quizzes and
-// grammar quizzes (from a hand-written HSK1 grammar bank). The generated
-// range is followed by the hand-authored grammar-explanation lesson and its
+// (e.g. "Местоимения", "Числа 2") at most 3 at a time as flashcards, plus
+// vocabulary quizzes and grammar quizzes (from a hand-written HSK1 grammar
+// bank). A word is only ever shown as a flashcard once, in the lesson it's
+// introduced — every review after that is a quiz question drawn from
+// everything introduced so far, never a re-shown card. The generated range
+// is followed by the hand-authored grammar-explanation lesson and its
 // sentence-builder review lesson (content seeded by migrations
 // 000026/000029, placed here at whatever lesson_number comes next). It is
 // meant to be run once against a database that already has migrations
@@ -42,8 +44,8 @@ import (
 const (
 	firstGeneratedLesson    = 2
 	totalLessons            = 60
-	wordStepsPerLesson      = 12
-	bonusReviewQuizzes      = 3 // extra quizzes drawn from review words, on top of the guaranteed one-per-new-word
+	bonusReviewQuizzes      = 3  // extra quizzes drawn from already-taught words, on top of the guaranteed one-per-new-word
+	reviewLessonQuizCount   = 12 // pure-review lessons: how many already-taught words get quizzed
 	grammarQuizzesPerLesson = 2
 )
 
@@ -249,6 +251,9 @@ func main() {
 
 	createOne := func(title, description string, newWords []wordInfo) {
 
+		// Words already taught are never shown as flashcards again — from
+		// here on they only reappear as quiz questions, so review happens
+		// through testing rather than re-reading the same card.
 		reviewPool := make([]wordInfo, 0, len(introduced))
 		newIDs := make(map[int64]bool, len(newWords))
 		for _, w := range newWords {
@@ -264,23 +269,18 @@ func main() {
 			reviewPool[i], reviewPool[j] = reviewPool[j], reviewPool[i]
 		})
 
-		reviewCount := wordStepsPerLesson - len(newWords)
-		if reviewCount > len(reviewPool) {
-			reviewCount = len(reviewPool)
-		}
-		if reviewCount < 0 {
-			reviewCount = 0
-		}
-
-		lessonWords := append(append([]wordInfo{}, newWords...), reviewPool[:reviewCount]...)
-
 		// Pure-review lessons ("Итоговое повторение") introduce no new
-		// words — guarantee quizzes for their whole review selection
-		// instead, so they stay just as practice-heavy as before.
-		guaranteed, bonus := newWords, bonusReviewQuizzes
+		// words, so they get a bigger batch of review quizzes instead of
+		// just the small per-lesson bonus.
+		reviewQuizCount := bonusReviewQuizzes
 		if len(newWords) == 0 {
-			guaranteed, bonus = lessonWords, 0
+			reviewQuizCount = reviewLessonQuizCount
 		}
+		if reviewQuizCount > len(reviewPool) {
+			reviewQuizCount = len(reviewPool)
+		}
+
+		reviewQuizWords := reviewPool[:reviewQuizCount]
 
 		// Everything a learner will have seen by the time they reach this
 		// lesson's quiz steps: every previously introduced word, plus this
@@ -295,14 +295,14 @@ func main() {
 
 		grammarEntries := selectGrammarEntries(&grammarCursor, grammarQuizzesPerLesson, introducedHanzi)
 
-		if err := createLesson(ctx, db, courseID, lessonNum, title, description, lessonWords,
-			guaranteed, bonus, grammarEntries, grammarQuizIDs, shownConstructs,
+		if err := createLesson(ctx, db, courseID, lessonNum, title, description,
+			newWords, reviewQuizWords, grammarEntries, grammarQuizIDs, shownConstructs,
 			vocabQuizCache, translationByID, allWordIDs, rng); err != nil {
 			log.Fatalf("failed to create lesson %d (%s): %v", lessonNum, title, err)
 		}
 
-		fmt.Printf("Created lesson %d: %s (%d new, %d review, %d grammar)\n",
-			lessonNum, title, len(newWords), reviewCount, len(grammarEntries))
+		fmt.Printf("Created lesson %d: %s (%d new, %d review quizzes, %d grammar)\n",
+			lessonNum, title, len(newWords), len(reviewQuizWords), len(grammarEntries))
 
 		introduced = append(introduced, newWords...)
 		lessonNum++
@@ -653,9 +653,8 @@ func createLesson(
 	lessonNum int,
 	title string,
 	description string,
-	lessonWords []wordInfo,
-	newWords []wordInfo, // every one of these gets a quiz — guaranteed practice for what's actually taught this lesson
-	bonusQuizCount int, // extra quizzes drawn from the remaining (review) words
+	newWords []wordInfo, // shown as flashcards (once) and guaranteed a quiz each
+	reviewQuizWords []wordInfo, // already-taught words quizzed for review — never shown as flashcards again
 	grammarEntries []int, // grammarBank indices already resolved (gated + selected) for this lesson
 	grammarQuizIDs []int64,
 	shownConstructs map[string]bool,
@@ -684,7 +683,9 @@ func createLesson(
 
 	sortOrder := 1
 
-	for _, w := range lessonWords {
+	// Flashcards only ever appear for words being taught for the first
+	// time — words already introduced are never shown again, only quizzed.
+	for _, w := range newWords {
 
 		_, err := tx.Exec(ctx, `
 			INSERT INTO lesson_steps (lesson_id, step_type, entity_id, sort_order)
@@ -697,29 +698,9 @@ func createLesson(
 		sortOrder++
 	}
 
-	newWordIDs := make(map[int64]bool, len(newWords))
-	for _, w := range newWords {
-		newWordIDs[w.ID] = true
-	}
-
-	reviewOnly := make([]wordInfo, 0, len(lessonWords))
-	for _, w := range lessonWords {
-		if !newWordIDs[w.ID] {
-			reviewOnly = append(reviewOnly, w)
-		}
-	}
-
-	rng.Shuffle(len(reviewOnly), func(i, j int) {
-		reviewOnly[i], reviewOnly[j] = reviewOnly[j], reviewOnly[i]
-	})
-
-	if bonusQuizCount > len(reviewOnly) {
-		bonusQuizCount = len(reviewOnly)
-	}
-
-	// Every new word is guaranteed a quiz; bonus review quizzes are appended
-	// on top so practice never falls short of what was just taught.
-	quizCandidates := append(append([]wordInfo{}, newWords...), reviewOnly[:bonusQuizCount]...)
+	// Every new word is guaranteed a quiz; review quizzes are appended on
+	// top so practice never falls short of what was just taught.
+	quizCandidates := append(append([]wordInfo{}, newWords...), reviewQuizWords...)
 
 	for i := 0; i < len(quizCandidates); i++ {
 
