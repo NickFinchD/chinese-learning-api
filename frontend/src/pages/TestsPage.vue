@@ -45,6 +45,19 @@
       </RouterLink>
 
       <RouterLink
+        to="/app/tests/words-reverse"
+        class="block rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl transition hover:shadow-md dark:border-white/10 dark:bg-white/5"
+      >
+        <h2 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
+          Перевод → слово
+        </h2>
+
+        <p class="text-gray-600 dark:text-gray-400">
+          То же самое, но наоборот: угадай иероглиф по переводу.
+        </p>
+      </RouterLink>
+
+      <RouterLink
         to="/app/tests/sentences"
         class="block rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl transition hover:shadow-md dark:border-white/10 dark:bg-white/5"
       >

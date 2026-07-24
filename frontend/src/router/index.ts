@@ -124,6 +124,12 @@ const router = createRouter({
     component: WordTrainingPage,
   },
   {
+    path: 'tests/words-reverse',
+    name: 'word-training-reverse',
+    component: WordTrainingPage,
+    props: { reverse: true },
+  },
+  {
     path: 'tests/sentences',
     name: 'sentence-test',
     component: SentenceTestPage,

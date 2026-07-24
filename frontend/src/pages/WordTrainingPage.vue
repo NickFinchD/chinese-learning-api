@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1 class="mb-8 text-3xl font-bold text-gray-900 dark:text-white">
-      Слово → перевод
+      {{ reverse ? 'Перевод → слово' : 'Слово → перевод' }}
     </h1>
 
     <div
@@ -116,17 +116,25 @@
         :key="training.currentIndex"
         class="animate-fade-in-up rounded-xl border border-white/50 bg-white/30 p-6 text-center shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5"
       >
-        <div class="mb-1 flex items-center justify-center gap-2">
-          <div class="font-hanzi text-4xl font-bold text-gray-900 dark:text-white">
-            {{ training.currentQuestion.word.hanzi }}
+        <template v-if="!reverse">
+          <div class="mb-1 flex items-center justify-center gap-2">
+            <div class="font-hanzi text-4xl font-bold text-gray-900 dark:text-white">
+              {{ training.currentQuestion.word.hanzi }}
+            </div>
+
+            <AudioButton :text="training.currentQuestion.word.hanzi" />
           </div>
 
-          <AudioButton :text="training.currentQuestion.word.hanzi" />
-        </div>
+          <div class="mb-6 text-gray-500 dark:text-gray-400">
+            {{ training.currentQuestion.word.pinyin }}
+          </div>
+        </template>
 
-        <div class="mb-6 text-gray-500 dark:text-gray-400">
-          {{ training.currentQuestion.word.pinyin }}
-        </div>
+        <template v-else>
+          <div class="mb-6 text-2xl font-bold text-gray-900 dark:text-white">
+            {{ training.currentQuestion.word.translation }}
+          </div>
+        </template>
 
         <div class="space-y-2 text-left">
           <button
@@ -137,7 +145,14 @@
             :disabled="training.answeredWordId !== null"
             @click="training.answer(option.id)"
           >
-            {{ option.translation }}
+            <template v-if="!reverse">
+              {{ option.translation }}
+            </template>
+
+            <template v-else>
+              <span class="font-hanzi text-lg">{{ option.hanzi }}</span>
+              <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">{{ option.pinyin }}</span>
+            </template>
           </button>
         </div>
 
@@ -183,6 +198,10 @@ import { RouterLink } from 'vue-router'
 import { useWordTrainingStore } from '@/stores/wordTraining'
 import AppIcon from '@/components/base/AppIcon.vue'
 import AudioButton from '@/components/base/AudioButton.vue'
+
+const { reverse = false } = defineProps<{
+  reverse?: boolean
+}>()
 
 const training = useWordTrainingStore()
 
