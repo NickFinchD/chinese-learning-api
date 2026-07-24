@@ -24,6 +24,12 @@ export interface GrammarNote {
   example_hanzi?: string
   example_pinyin?: string
   example_translation?: string
+  example2_hanzi?: string
+  example2_pinyin?: string
+  example2_translation?: string
+  example3_hanzi?: string
+  example3_pinyin?: string
+  example3_translation?: string
   hsk_level: number
 }
 

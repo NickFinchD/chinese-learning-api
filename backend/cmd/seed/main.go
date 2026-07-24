@@ -28,6 +28,14 @@
 // given grammar *construct* (e.g. "的 — possession", shared by more than one
 // bank entry) is actually used, a short grammar-note step explaining it is
 // inserted right before that quiz step.
+//
+// Separately, particles and auxiliary verbs (吗, 是, 没, 有, 了, 会, ...; see
+// particleIntros) get their mechanic explained immediately, the moment the
+// word itself is introduced: its flashcard is followed by a "principle" step
+// and then an "examples" step, before the lesson's quizzes continue. This
+// reuses the same shownConstructs map as the grammar-quiz mechanism above
+// (keyed by the same grammar_notes title), so whichever mechanism reaches a
+// given construct first is the one that shows it — the other just skips it.
 package main
 
 import (
@@ -111,6 +119,46 @@ type gramQuestion struct {
 	// first time any entry using it is actually selected for a lesson.
 	constructTitle string
 }
+
+// particleIntro ties a specific particle/auxiliary-verb hanzi to the
+// grammar_notes rows explaining it — shown the moment that word itself is
+// introduced (not later, whenever some full example sentence's vocabulary
+// happens to be ready). principleTitle explains the mechanic; examplesTitle
+// is a second, dedicated note giving a few more usage sentences. Several
+// hanzi can share the same pair (e.g. 不/没, 也/都, 会/能/请/想) — only the
+// first of the group to be introduced actually shows the steps, tracked via
+// the same shownConstructs map the grammar-quiz gating below already uses.
+type particleIntro struct {
+	hanzi          string
+	principleTitle string
+	examplesTitle  string
+}
+
+var particleIntros = []particleIntro{
+	{"是", "Глагол-связка 是 («быть»)", "Примеры: 是"},
+	{"不", "Отрицание: 不 и 没", "Примеры: 不 и 没"},
+	{"没", "Отрицание: 不 и 没", "Примеры: 不 и 没"},
+	{"有", "Глагол 有 — обладание и наличие", "Примеры: 有"},
+	{"的", "Притяжательная частица 的", "Примеры: 的"},
+	{"都", "Наречия 也 и 都 перед сказуемым", "Примеры: 也 и 都"},
+	{"也", "Наречия 也 и 都 перед сказуемым", "Примеры: 也 и 都"},
+	{"和", "Союз 和 — соединение существительных", "Примеры: 和"},
+	{"了", "Частица 了 — завершённое действие", "Примеры: 了"},
+	{"吗", "Вопрос с частицей 吗", "Примеры: 吗"},
+	{"呢", "Краткий вопрос с 呢", "Примеры: 呢"},
+	{"会", "Модальные глаголы перед основным глаголом", "Примеры: модальных глаголов"},
+	{"能", "Модальные глаголы перед основным глаголом", "Примеры: модальных глаголов"},
+	{"请", "Модальные глаголы перед основным глаголом", "Примеры: модальных глаголов"},
+	{"想", "Модальные глаголы перед основным глаголом", "Примеры: модальных глаголов"},
+}
+
+var particleIntroByHanzi = func() map[string]particleIntro {
+	m := make(map[string]particleIntro, len(particleIntros))
+	for _, p := range particleIntros {
+		m[p.hanzi] = p
+	}
+	return m
+}()
 
 var grammarBank = []gramQuestion{
 	{"Выберите правильный порядок слов: «Я пью чай»", []gramOption{
@@ -696,6 +744,46 @@ func createLesson(
 		}
 
 		sortOrder++
+	}
+
+	// A new particle or auxiliary verb (吗, 是, 没, 有, 了, ...) gets its
+	// mechanic explained, then a couple more usage examples, right after its
+	// own flashcard and before any testing continues — training only
+	// resumes once both steps have been shown.
+	for _, w := range newWords {
+
+		intro, ok := particleIntroByHanzi[w.Hanzi]
+		if !ok || shownConstructs[intro.principleTitle] {
+			continue
+		}
+
+		principleID, err := findGrammarNoteByTitle(ctx, tx, intro.principleTitle)
+		if err != nil {
+			return err
+		}
+
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO lesson_steps (lesson_id, step_type, entity_id, sort_order)
+			VALUES ($1, 'grammar', $2, $3)
+		`, lessonID, principleID, sortOrder); err != nil {
+			return err
+		}
+		sortOrder++
+
+		examplesID, err := findGrammarNoteByTitle(ctx, tx, intro.examplesTitle)
+		if err != nil {
+			return err
+		}
+
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO lesson_steps (lesson_id, step_type, entity_id, sort_order)
+			VALUES ($1, 'grammar', $2, $3)
+		`, lessonID, examplesID, sortOrder); err != nil {
+			return err
+		}
+		sortOrder++
+
+		shownConstructs[intro.principleTitle] = true
 	}
 
 	// Every new word is guaranteed a quiz; review quizzes are appended on
