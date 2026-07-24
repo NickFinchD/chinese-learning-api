@@ -1,13 +1,13 @@
 <template>
   <WordStep
     v-if="step.step_type === 'word' && step.data"
-    :key="step.id"
+    :key="stepKey"
     :word="step.data"
   />
 
   <QuizStep
     v-else-if="step.step_type === 'quiz' && step.data"
-    :key="step.id"
+    :key="stepKey"
     :quiz="step.data"
     :is-last-step="isLastStep"
     :pinyin-by-hanzi="pinyinByHanzi"
@@ -17,13 +17,13 @@
 
   <GrammarStep
     v-else-if="step.step_type === 'grammar' && step.data"
-    :key="step.id"
+    :key="stepKey"
     :note="step.data"
   />
 
   <SentenceBuilderStep
     v-else-if="step.step_type === 'sentence_builder' && step.data"
-    :key="step.id"
+    :key="stepKey"
     :exercise="step.data"
     :is-last-step="isLastStep"
     @answered="$emit('answered', $event)"
@@ -39,6 +39,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+
 import WordStep from './WordStep.vue'
 import QuizStep from './QuizStep.vue'
 import GrammarStep from './GrammarStep.vue'
@@ -46,8 +48,9 @@ import SentenceBuilderStep from './SentenceBuilderStep.vue'
 
 import type { LessonStep } from '@/types/lesson'
 
-defineProps<{
+const props = defineProps<{
   step: LessonStep
+  attempt: number
   isLastStep: boolean
   pinyinByHanzi: Record<string, string>
 }>()
@@ -56,4 +59,10 @@ defineEmits<{
   (e: 'answered', correct: boolean): void
   (e: 'next'): void
 }>()
+
+// Folds in the retry attempt number so a step being re-queued after a wrong
+// answer always gets a fresh component instance (reset local state), even
+// when it lands back at the same position in the queue — see LessonPage's
+// retryAttempts for why that position-only case needs this.
+const stepKey = computed(() => `${props.step.id}-${props.attempt}`)
 </script>

@@ -34,9 +34,25 @@
 
       <div class="flex flex-wrap items-center justify-center gap-3">
         <RouterLink
+          v-if="nextLesson"
+          :to="{ name: 'lesson', params: { id: nextLesson.id } }"
+          class="inline-flex items-center gap-2 rounded-full bg-[var(--color-primary)] px-4 py-3 font-semibold text-white shadow-lg shadow-[var(--color-primary)]/30 transition hover:bg-[var(--color-primary)]/90"
+        >
+          Продолжить
+          <AppIcon
+            name="arrow-left"
+            :size="16"
+            class="rotate-180"
+          />
+        </RouterLink>
+
+        <RouterLink
           v-if="lessons.current"
           :to="{ name: 'course', params: { id: lessons.current.course_id } }"
-          class="inline-block rounded-full bg-[var(--color-primary)] px-4 py-3 font-semibold text-white shadow-lg shadow-[var(--color-primary)]/30 transition hover:bg-[var(--color-primary)]/90"
+          class="inline-block rounded-full px-4 py-3 font-semibold transition"
+          :class="nextLesson
+            ? 'border border-white/50 bg-white/30 text-gray-700 backdrop-blur-md hover:bg-white/50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10'
+            : 'bg-[var(--color-primary)] text-white shadow-lg shadow-[var(--color-primary)]/30 hover:bg-[var(--color-primary)]/90'"
         >
           Вернуться к курсу
         </RouterLink>
@@ -103,6 +119,7 @@
     >
       <LessonStepRenderer
         :step="currentStep"
+        :attempt="retryAttempts[currentStep.id] ?? 0"
         :is-last-step="isLastStep"
         :pinyin-by-hanzi="pinyinByHanzi"
         @answered="onAnswered"
@@ -118,6 +135,7 @@ import { RouterLink, useRoute } from 'vue-router'
 
 import { useLessonsStore } from '@/stores/lessons'
 import { useGamificationStore } from '@/stores/gamification'
+import { useCoursesStore } from '@/stores/courses'
 import LessonStepRenderer from '@/components/lesson/LessonStepRenderer.vue'
 import AppIcon from '@/components/base/AppIcon.vue'
 import BaseSpinner from '@/components/base/BaseSpinner.vue'
@@ -126,6 +144,7 @@ import type { LessonStep } from '@/types/lesson'
 
 const lessons = useLessonsStore()
 const gamification = useGamificationStore()
+const courses = useCoursesStore()
 const route = useRoute()
 
 const lessonId = Number(route.params.id)
@@ -143,12 +162,32 @@ const stepsQueue = ref<LessonStep[]>([])
 
 const quizResults = new Map<number, boolean>()
 
+// Bumped each time a step is requeued after a wrong answer. Folded into
+// LessonStepRenderer's key so the quiz/sentence-builder component always
+// remounts with fresh (unanswered) local state on retry — needed because
+// re-queueing a step that's already last in the queue is a same-position
+// no-op (splice-then-push lands it right back where it was), which would
+// otherwise leave Vue patching the same component instance in place,
+// stuck showing the previous "Неверно" result forever.
+const retryAttempts = ref<Record<number, number>>({})
+
 const currentStep = computed(() => {
   return stepsQueue.value[currentStepIndex.value] ?? null
 })
 
 const isLastStep = computed(() => {
   return currentStepIndex.value === stepsQueue.value.length - 1
+})
+
+// The next lesson in the same course, if any — lets the "Продолжить" button
+// on the completion screen jump straight into it instead of going back to
+// the course overview first.
+const nextLesson = computed(() => {
+  if (!lessons.current || !courses.current || courses.current.id !== lessons.current.course_id) {
+    return null
+  }
+
+  return courses.current.lessons.find(l => l.lesson_number === lessons.current!.lesson_number + 1) ?? null
 })
 
 // Lets quiz steps show the pinyin for the word they're testing, since the
@@ -199,6 +238,7 @@ async function nextStep() {
   if (isScoredStep(step) && quizResults.get(step.id) === false) {
     stepsQueue.value.splice(currentStepIndex.value, 1)
     stepsQueue.value.push(step)
+    retryAttempts.value[step.id] = (retryAttempts.value[step.id] ?? 0) + 1
   } else if (currentStepIndex.value < stepsQueue.value.length - 1) {
     currentStepIndex.value++
   } else {
@@ -259,6 +299,14 @@ onMounted(async () => {
   await lessons.loadLesson(lessonId)
 
   stepsQueue.value = lessons.current ? [...lessons.current.steps] : []
+
+  if (lessons.current) {
+    // Not awaited: only needed once the learner reaches the completion
+    // screen, so it shouldn't delay showing the lesson's own content.
+    courses.loadCourse(lessons.current.course_id).catch(error => {
+      console.error('Failed to load course lessons for the "next lesson" link:', error)
+    })
+  }
 
   try {
     const resumeStepIndex = await lessons.resumeOrStart(lessonId)
