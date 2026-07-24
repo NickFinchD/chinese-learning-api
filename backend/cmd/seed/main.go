@@ -8,7 +8,7 @@
 // sentence-builder review lesson (content seeded by migrations
 // 000026/000029, placed here at whatever lesson_number comes next). It is
 // meant to be run once against a database that already has migrations
-// 000001..000029 applied:
+// 000001..000036 applied:
 //
 //	go run ./cmd/seed
 //
@@ -18,6 +18,14 @@
 // be re-run freely to pick up changes to the topic list or grammar bank.
 // Vocabulary/grammar quizzes are looked up by question text and reused
 // instead of being duplicated.
+//
+// Grammar quizzes are gated: a grammarBank entry is only eligible once every
+// word its example sentence uses has actually been introduced in an earlier
+// (or the current) lesson — otherwise a learner would be quizzed on 的/吗/在
+// sentences built from vocabulary they haven't seen yet. The first time a
+// given grammar *construct* (e.g. "的 — possession", shared by more than one
+// bank entry) is actually used, a short grammar-note step explaining it is
+// inserted right before that quiz step.
 package main
 
 import (
@@ -51,31 +59,31 @@ type topicGroup struct {
 }
 
 // Topics cover every HSK1 word not already introduced by the hand-authored
-// lesson 1 ("Приветствие"). The first five groups replace what used to be
-// fixed lessons 2..6 (Числа/Семья/Глаголы и действия/Время и даты/Еда и
-// напитки) — those introduced up to 12 new words in a single lesson, so they
-// were folded into the same 3-new-words-per-lesson topic loop as everything
-// else below. Order defines the pedagogical progression.
+// lesson 1 ("Приветствие"). Ordered so grammatically load-bearing vocabulary
+// (pronouns, particles, numbers, measure words, question words) comes
+// first — almost every grammar-quiz sentence leans on one of these, so
+// teaching them early lets grammar quizzes unlock much sooner instead of
+// piling up at the very end of the course.
 var topics = []topicGroup{
-	{"Числа", []string{"一", "二", "三", "四", "五", "六", "七", "八", "九", "十"}},
-	{"Семья", []string{"爸爸", "妈妈", "儿子", "女儿", "我们", "你们"}},
-	{"Глаголы и действия", []string{"吃", "喝", "看", "听", "说", "读", "写", "买", "去", "来", "做", "喜欢"}},
-	{"Время и даты", []string{"今天", "明天", "昨天", "现在", "年", "月", "星期", "点"}},
-	{"Еда и напитки", []string{"茶", "水", "米饭", "菜", "水果", "苹果"}},
 	{"Местоимения", []string{"我", "你", "他", "她", "那", "这"}},
 	{"Частицы и грамматика", []string{"是", "不", "有", "的", "都", "和", "了", "吗", "没", "呢", "也"}},
+	{"Числа", []string{"一", "二", "三", "四", "五", "六", "七", "八", "九", "十"}},
+	{"Счётные слова", []string{"本", "分钟", "个", "号", "块", "岁", "些"}},
 	{"Вопросительные слова", []string{"多少", "几", "哪", "哪儿", "谁", "什么", "怎么", "怎么样"}},
+	{"Семья", []string{"爸爸", "妈妈", "儿子", "女儿", "我们", "你们"}},
+	{"Глаголы и действия", []string{"吃", "喝", "看", "听", "说", "读", "写", "买", "去", "来", "做", "喜欢"}},
 	{"Модальные глаголы", []string{"会", "能", "请", "想"}},
+	{"Прилагательные", []string{"大", "多", "高兴", "好", "很", "冷", "漂亮", "热", "少", "太", "一点儿", "小"}},
+	{"Время и даты", []string{"今天", "明天", "昨天", "现在", "年", "月", "星期", "点"}},
+	{"Еда и напитки", []string{"茶", "水", "米饭", "菜", "水果", "苹果"}},
 	{"Люди и профессии", []string{"工作", "老师", "朋友", "人", "同学", "先生", "小姐", "学生", "医生"}},
 	{"Дом и вещи", []string{"杯子", "电脑", "电视", "电影", "东西", "家", "书", "衣服", "椅子", "桌子"}},
 	{"Города и места", []string{"北京", "中国", "饭店", "商店", "学校", "医院"}},
 	{"Транспорт и покупки", []string{"出租车", "飞机", "钱"}},
-	{"Прилагательные", []string{"大", "多", "高兴", "好", "很", "冷", "漂亮", "热", "少", "太", "一点儿", "小"}},
 	{"Место и направление", []string{"后面", "里", "前面", "上", "下", "在"}},
 	{"Погода и время", []string{"上午", "时候", "天气", "下午", "下雨", "中午"}},
 	{"Глаголы движения", []string{"回", "开", "睡觉", "住", "坐"}},
 	{"Глаголы общения", []string{"爱", "看见", "认识", "打电话", "叫"}},
-	{"Счётные слова", []string{"本", "分钟", "个", "号", "块", "岁", "些"}},
 	{"Вежливые фразы", []string{"不客气", "对不起", "没关系", "喂"}},
 	{"Учёба", []string{"汉语", "名字", "学习", "字"}},
 	{"Животные", []string{"狗", "马", "猫"}},
@@ -89,69 +97,99 @@ type gramOption struct {
 type gramQuestion struct {
 	question string
 	options  []gramOption
+
+	// requiredHanzi lists every word the example sentence relies on — the
+	// question is only eligible for a lesson once all of these have been
+	// introduced (in this lesson or an earlier one).
+	requiredHanzi []string
+
+	// constructTitle names the grammar_notes row (seeded by migrations
+	// 000026/000036) explaining the pattern this question tests. Several
+	// entries can share a construct; its note is only inserted once, the
+	// first time any entry using it is actually selected for a lesson.
+	constructTitle string
 }
 
 var grammarBank = []gramQuestion{
 	{"Выберите правильный порядок слов: «Я пью чай»", []gramOption{
 		{"我喝茶", true}, {"我茶喝", false}, {"喝我茶", false}, {"茶我喝", false},
-	}},
+	}, []string{"我", "喝", "茶"}, "Порядок слов: подлежащее + время + сказуемое + дополнение"},
+
 	{"Как правильно спросить «Это твоя книга?» (вопрос да/нет)", []gramOption{
 		{"这是你的书吗?", true}, {"这是你的书呢?", false}, {"这是你的书了?", false}, {"这是你的书的?", false},
-	}},
+	}, []string{"这", "是", "你", "的", "书", "吗"}, "Вопрос с частицей 吗"},
+
 	{"Выберите правильный вариант: «Мамина книга» (принадлежность)", []gramOption{
 		{"妈妈的书", true}, {"妈妈书的", false}, {"的妈妈书", false}, {"书的妈妈", false},
-	}},
+	}, []string{"妈妈", "的", "书"}, "Притяжательная частица 的"},
+
 	{"Как правильно сказать «У меня нет денег»?", []gramOption{
 		{"我没有钱", true}, {"我不有钱", false}, {"我不是有钱", false}, {"我没是钱", false},
-	}},
+	}, []string{"我", "没", "有", "钱"}, "Отрицание: 不 и 没"},
+
 	{"Выберите правильный вариант: «Это не большое»", []gramOption{
 		{"这不大", true}, {"这没大", false}, {"不这大", false}, {"这不是大是", false},
-	}},
+	}, []string{"这", "不", "大"}, "Отрицание: 不 и 没"},
+
 	{"Как правильно сказать «У меня есть один друг»?", []gramOption{
 		{"我有一个朋友", true}, {"我有一本朋友", false}, {"我有朋友一个", false}, {"我有个一朋友", false},
-	}},
+	}, []string{"我", "有", "一", "个", "朋友"}, "Числительное + счётное слово + существительное"},
+
 	{"Выберите правильный порядок слов: «Я сегодня иду в школу»", []gramOption{
 		{"我今天去学校", true}, {"我去今天学校", false}, {"今天我学校去", false}, {"我去学校今天", false},
-	}},
+	}, []string{"我", "今天", "去", "学校"}, "Порядок слов: подлежащее + время + сказуемое + дополнение"},
+
 	{"Как правильно сказать «Я хочу пить воду»?", []gramOption{
 		{"我想喝水", true}, {"我喝想水", false}, {"想我喝水", false}, {"我喝水想", false},
-	}},
+	}, []string{"我", "想", "喝", "水"}, "Модальные глаголы перед основным глаголом"},
+
 	{"Выберите правильный вариант: «Я тоже врач»", []gramOption{
 		{"我也是医生", true}, {"我是也医生", false}, {"也我是医生", false}, {"我是医生也", false},
-	}},
+	}, []string{"我", "也", "是", "医生"}, "Наречия 也 и 都 перед сказуемым"},
+
 	{"Выберите правильный вариант: «Мы все ученики»", []gramOption{
 		{"我们都是学生", true}, {"都我们是学生", false}, {"我们是都学生", false}, {"我们是学生都", false},
-	}},
+	}, []string{"我们", "都", "是", "学生"}, "Наречия 也 и 都 перед сказуемым"},
+
 	{"Как коротко спросить «А ты?» в ответ на «Я иду в школу»?", []gramOption{
 		{"你呢?", true}, {"你吗?", false}, {"你了?", false}, {"你的?", false},
-	}},
+	}, []string{"你", "呢"}, "Краткий вопрос с 呢"},
+
 	{"Как правильно сказать «Я уже поел» (завершённое действие)?", []gramOption{
 		{"我吃了", true}, {"我了吃", false}, {"我吃的", false}, {"我吃吗", false},
-	}},
+	}, []string{"我", "吃", "了"}, "Частица 了 — завершённое действие"},
+
 	{"Выберите правильный порядок слов: «Что ты ешь?»", []gramOption{
 		{"你吃什么?", true}, {"什么你吃?", false}, {"你什么吃?", false}, {"吃你什么?", false},
-	}},
+	}, []string{"你", "吃", "什么"}, "Вопросительные слова: 什么, 谁, 哪儿"},
+
 	{"Выберите правильный порядок слов: «Кто твой учитель?»", []gramOption{
 		{"谁是你的老师?", true}, {"你的老师谁是?", false}, {"是谁你的老师?", false}, {"你谁的老师是?", false},
-	}},
+	}, []string{"谁", "是", "你", "的", "老师"}, "Притяжательная частица 的"},
+
 	{"Как правильно сказать «Погода очень хорошая»?", []gramOption{
 		{"天气很好", true}, {"天气好很", false}, {"很天气好", false}, {"天气很是好", false},
-	}},
+	}, []string{"天气", "很", "好"}, "很 перед прилагательным"},
+
 	{"Как правильно сказать «Я нахожусь дома»?", []gramOption{
 		{"我在家", true}, {"我家在", false}, {"在我家", false}, {"我是在家", false},
-	}},
+	}, []string{"我", "在", "家"}, "在 — местонахождение"},
+
 	{"Выберите правильный порядок слов: «Где твой дом?»", []gramOption{
 		{"你家在哪儿?", true}, {"哪儿你家在?", false}, {"你在哪儿家?", false}, {"你家哪儿在?", false},
-	}},
+	}, []string{"你", "家", "在", "哪儿"}, "在 — местонахождение"},
+
 	{"Как правильно спросить цену: «Сколько это стоит?»", []gramOption{
 		{"这个多少钱?", true}, {"这个几钱?", false}, {"多少这个钱?", false}, {"这个钱多少?", false},
-	}},
+	}, []string{"这", "个", "多少", "钱"}, "Вопросительные слова: 什么, 谁, 哪儿"},
+
 	{"Как правильно спросить «Сколько у тебя книг?» (малое число + счётное слово)", []gramOption{
 		{"你有几本书?", true}, {"你有几书?", false}, {"你有本几书?", false}, {"几你有本书?", false},
-	}},
+	}, []string{"你", "有", "几", "本", "书"}, "Числительное + счётное слово + существительное"},
+
 	{"Как правильно сказать «Я умею говорить по-китайски»?", []gramOption{
 		{"我会说汉语", true}, {"我说会汉语", false}, {"会我说汉语", false}, {"我会汉语说", false},
-	}},
+	}, []string{"我", "会", "说", "汉语"}, "Модальные глаголы перед основным глаголом"},
 }
 
 func main() {
@@ -204,7 +242,8 @@ func main() {
 
 	vocabQuizCache := map[int64]int64{}
 	grammarQuizIDs := make([]int64, len(grammarBank))
-	grammarIdx := 0
+	grammarCursor := 0
+	shownConstructs := map[string]bool{}
 
 	lessonNum := firstGeneratedLesson
 
@@ -243,13 +282,27 @@ func main() {
 			guaranteed, bonus = lessonWords, 0
 		}
 
+		// Everything a learner will have seen by the time they reach this
+		// lesson's quiz steps: every previously introduced word, plus this
+		// lesson's own new words (taught earlier in the same lesson).
+		introducedHanzi := make(map[string]bool, len(introduced)+len(newWords))
+		for _, w := range introduced {
+			introducedHanzi[w.Hanzi] = true
+		}
+		for _, w := range newWords {
+			introducedHanzi[w.Hanzi] = true
+		}
+
+		grammarEntries := selectGrammarEntries(&grammarCursor, grammarQuizzesPerLesson, introducedHanzi)
+
 		if err := createLesson(ctx, db, courseID, lessonNum, title, description, lessonWords,
-			guaranteed, bonus, grammarQuizzesPerLesson, &grammarIdx, grammarQuizIDs,
+			guaranteed, bonus, grammarEntries, grammarQuizIDs, shownConstructs,
 			vocabQuizCache, translationByID, allWordIDs, rng); err != nil {
 			log.Fatalf("failed to create lesson %d (%s): %v", lessonNum, title, err)
 		}
 
-		fmt.Printf("Created lesson %d: %s (%d new, %d review)\n", lessonNum, title, len(newWords), reviewCount)
+		fmt.Printf("Created lesson %d: %s (%d new, %d review, %d grammar)\n",
+			lessonNum, title, len(newWords), reviewCount, len(grammarEntries))
 
 		introduced = append(introduced, newWords...)
 		lessonNum++
@@ -318,6 +371,44 @@ func main() {
 	fmt.Printf("Created lesson %d: Повторение: вопросы\n", lessonNum)
 
 	fmt.Println("Done.")
+}
+
+// grammarUnlocked reports whether every word gq's example sentence relies on
+// has already been introduced.
+func grammarUnlocked(gq gramQuestion, introducedHanzi map[string]bool) bool {
+	for _, h := range gq.requiredHanzi {
+		if !introducedHanzi[h] {
+			return false
+		}
+	}
+	return true
+}
+
+// selectGrammarEntries scans grammarBank starting from *cursor (which
+// persists across lessons, so it resumes where the previous lesson left
+// off), returning up to `quota` indices whose required vocabulary is already
+// introduced. Locked entries are skipped without being lost — the cursor
+// simply passes over them and reconsiders them once it wraps back around,
+// by which point more vocabulary is usually available. Scans at most one
+// full pass over the bank per call, so a lesson early in the course (before
+// much vocabulary exists) can legitimately return fewer than `quota`, or
+// none at all.
+func selectGrammarEntries(cursor *int, quota int, introducedHanzi map[string]bool) []int {
+
+	n := len(grammarBank)
+	selected := make([]int, 0, quota)
+
+	for scanned := 0; len(selected) < quota && scanned < n; scanned++ {
+
+		idx := *cursor % n
+		*cursor++
+
+		if grammarUnlocked(grammarBank[idx], introducedHanzi) {
+			selected = append(selected, idx)
+		}
+	}
+
+	return selected
 }
 
 func createGrammarLesson(ctx context.Context, db interface {
@@ -537,6 +628,22 @@ func findQuizByQuestion(ctx context.Context, tx pgx.Tx, question string) (int64,
 	return id, true, nil
 }
 
+// findGrammarNoteByTitle looks up a grammar_notes row seeded by a migration.
+// Fatal if missing: every constructTitle referenced from grammarBank must
+// have a matching row seeded ahead of time (migrations 000026, 000036).
+func findGrammarNoteByTitle(ctx context.Context, tx pgx.Tx, title string) (int64, error) {
+
+	var id int64
+
+	err := tx.QueryRow(ctx, `SELECT id FROM grammar_notes WHERE title = $1`, title).Scan(&id)
+
+	if err != nil {
+		return 0, fmt.Errorf("grammar note %q not found (seed a migration for it first): %w", title, err)
+	}
+
+	return id, nil
+}
+
 func createLesson(
 	ctx context.Context,
 	db interface {
@@ -549,9 +656,9 @@ func createLesson(
 	lessonWords []wordInfo,
 	newWords []wordInfo, // every one of these gets a quiz — guaranteed practice for what's actually taught this lesson
 	bonusQuizCount int, // extra quizzes drawn from the remaining (review) words
-	grammarQuizCount int,
-	grammarIdx *int,
+	grammarEntries []int, // grammarBank indices already resolved (gated + selected) for this lesson
 	grammarQuizIDs []int64,
+	shownConstructs map[string]bool,
 	vocabQuizCache map[int64]int64,
 	translationByID map[int64]string,
 	allWordIDs []int64,
@@ -673,11 +780,9 @@ func createLesson(
 		sortOrder++
 	}
 
-	for i := 0; i < grammarQuizCount; i++ {
+	for _, idx := range grammarEntries {
 
-		idx := *grammarIdx % len(grammarBank)
 		gq := grammarBank[idx]
-		*grammarIdx++
 
 		quizID := grammarQuizIDs[idx]
 
@@ -711,6 +816,26 @@ func createLesson(
 			}
 
 			grammarQuizIDs[idx] = quizID
+		}
+
+		// First time this construct is actually used: explain it before
+		// testing it.
+		if !shownConstructs[gq.constructTitle] {
+
+			noteID, err := findGrammarNoteByTitle(ctx, tx, gq.constructTitle)
+			if err != nil {
+				return err
+			}
+
+			if _, err := tx.Exec(ctx, `
+				INSERT INTO lesson_steps (lesson_id, step_type, entity_id, sort_order)
+				VALUES ($1, 'grammar', $2, $3)
+			`, lessonID, noteID, sortOrder); err != nil {
+				return err
+			}
+
+			sortOrder++
+			shownConstructs[gq.constructTitle] = true
 		}
 
 		_, err := tx.Exec(ctx, `
