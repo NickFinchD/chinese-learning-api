@@ -87,6 +87,13 @@ const router = createRouter({
     component: VocabularyPage,
   },
   {
+    // Collections used to have their own page at this path — now it's a
+    // tab on the vocabulary page, so redirect any stale links/bookmarks
+    // instead of leaving them on an unmatched, blank route.
+    path: 'vocabulary/collections',
+    redirect: { name: 'vocabulary', query: { tab: 'collections' } },
+  },
+  {
     path: 'vocabulary/collections/:id',
     name: 'collection',
     component: CollectionDetailPage,
@@ -142,6 +149,14 @@ const router = createRouter({
     component: SettingsPage,
   },
 ],
+    },
+
+    {
+      // Any unmatched path (stale bookmark, typo, old link) redirects home
+      // instead of rendering a blank page — Vue Router just warns and
+      // renders nothing for a truly unmatched route otherwise.
+      path: '/:pathMatch(.*)*',
+      redirect: '/app',
     },
   ],
 })
