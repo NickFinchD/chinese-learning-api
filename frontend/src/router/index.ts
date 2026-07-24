@@ -11,12 +11,15 @@ import { useAuthStore } from '@/stores/auth'
 
 import CoursesPage from '@/pages/CoursesPage.vue'
 import VocabularyPage from '@/pages/VocabularyPage.vue'
+import CollectionsPage from '@/pages/CollectionsPage.vue'
+import CollectionDetailPage from '@/pages/CollectionDetailPage.vue'
 import SettingsPage from '@/pages/SettingsPage.vue'
 
 import TestsPage from '@/pages/TestsPage.vue'
 import GrammarTestPage from '@/pages/GrammarTestPage.vue'
 import WordTrainingPage from '@/pages/WordTrainingPage.vue'
 import SentenceTestPage from '@/pages/SentenceTestPage.vue'
+import MockExamPage from '@/pages/MockExamPage.vue'
 
 import TextsPage from '@/pages/TextsPage.vue'
 import TextPage from '@/pages/TextPage.vue'
@@ -85,6 +88,16 @@ const router = createRouter({
     component: VocabularyPage,
   },
   {
+    path: 'vocabulary/collections',
+    name: 'collections',
+    component: CollectionsPage,
+  },
+  {
+    path: 'vocabulary/collections/:id',
+    name: 'collection',
+    component: CollectionDetailPage,
+  },
+  {
     path: 'texts',
     name: 'texts',
     component: TextsPage,
@@ -113,6 +126,11 @@ const router = createRouter({
     path: 'tests/sentences',
     name: 'sentence-test',
     component: SentenceTestPage,
+  },
+  {
+    path: 'tests/mock-exam',
+    name: 'mock-exam',
+    component: MockExamPage,
   },
   {
   path: 'lessons/:id',

@@ -7,12 +7,14 @@ import (
 
 	"github.com/NickFinchD/chinese-learning-api/config"
 	"github.com/NickFinchD/chinese-learning-api/internal/auth"
+	"github.com/NickFinchD/chinese-learning-api/internal/collections"
 	"github.com/NickFinchD/chinese-learning-api/internal/courses"
 	"github.com/NickFinchD/chinese-learning-api/internal/database"
 	"github.com/NickFinchD/chinese-learning-api/internal/gamification"
 	"github.com/NickFinchD/chinese-learning-api/internal/grammar"
 	"github.com/NickFinchD/chinese-learning-api/internal/learning"
 	"github.com/NickFinchD/chinese-learning-api/internal/lessons"
+	"github.com/NickFinchD/chinese-learning-api/internal/mockexam"
 	"github.com/NickFinchD/chinese-learning-api/internal/progress"
 	"github.com/NickFinchD/chinese-learning-api/internal/quizzes"
 	"github.com/NickFinchD/chinese-learning-api/internal/savedwords"
@@ -50,6 +52,10 @@ func main() {
 	savedWordsService := savedwords.NewService(savedWordsRepository)
 	savedWordsHandler := savedwords.NewHandler(savedWordsService)
 
+	collectionsRepository := collections.NewRepository(db)
+	collectionsService := collections.NewService(collectionsRepository)
+	collectionsHandler := collections.NewHandler(collectionsService)
+
 	coursesRepository := courses.NewRepository(db)
 	coursesService := courses.NewService(coursesRepository)
 	coursesHandler := courses.NewHandler(coursesService)
@@ -78,6 +84,15 @@ func main() {
 	gamificationRepository := gamification.NewRepository(db)
 	gamificationService := gamification.NewService(gamificationRepository)
 	gamificationHandler := gamification.NewHandler(gamificationService)
+
+	mockExamRepository := mockexam.NewRepository(db)
+	mockExamService := mockexam.NewService(
+		mockExamRepository,
+		quizzesService,
+		sentencesService,
+		gamificationService,
+	)
+	mockExamHandler := mockexam.NewHandler(mockExamService)
 
 	progressRepository := progress.NewRepository(db)
 	progressService := progress.NewService(progressRepository, gamificationService)
@@ -154,6 +169,10 @@ func main() {
 		authorized.Group("/words"),
 		savedWordsHandler,
 	)
+	collections.RegisterRoutes(
+		authorized.Group("/collections"),
+		collectionsHandler,
+	)
 	courses.RegisterRoutes(
 		authorized.Group("/courses"),
 		coursesHandler,
@@ -184,6 +203,10 @@ func main() {
 	sentences.RegisterRoutes(
 		authorized.Group("/sentences"),
 		sentencesHandler,
+	)
+	mockexam.RegisterRoutes(
+		authorized.Group("/mock-exams"),
+		mockExamHandler,
 	)
 
 	// =========================

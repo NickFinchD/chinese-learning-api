@@ -64,6 +64,31 @@ func (r *Repository) List(ctx context.Context, hskLevel int16) ([]Exercise, erro
 	return result, rows.Err()
 }
 
+func (r *Repository) GetByID(ctx context.Context, id int64) (*Exercise, error) {
+
+	var e Exercise
+
+	err := r.db.QueryRow(ctx, `
+		SELECT id, translation, chunks, pinyin, hsk_level, created_at, updated_at
+		FROM sentence_exercises
+		WHERE id = $1
+	`, id).Scan(
+		&e.ID,
+		&e.Translation,
+		&e.Chunks,
+		&e.Pinyin,
+		&e.HSKLevel,
+		&e.CreatedAt,
+		&e.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &e, nil
+}
+
 func (r *Repository) GetByIDs(ctx context.Context, ids []int64) ([]Exercise, error) {
 
 	if len(ids) == 0 {

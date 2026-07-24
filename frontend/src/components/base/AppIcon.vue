@@ -43,6 +43,12 @@ export type IconName =
   | 'stop'
   | 'eye'
   | 'eye-off'
+  | 'folder'
+  | 'plus'
+  | 'trash'
+  | 'pencil'
+  | 'arrow-left'
+  | 'clock'
 
 const props = withDefaults(
   defineProps<{
@@ -83,6 +89,12 @@ const icons: Record<IconName, string> = {
   'stop': '<rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor" stroke="none" />',
   'eye': '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" /><circle cx="12" cy="12" r="2.8" />',
   'eye-off': '<path d="M2.5 12S6 5.5 12 5.5c1.6 0 3 .4 4.2 1M21.5 12S18 18.5 12 18.5c-1.6 0-3-.4-4.2-1" /><path d="M9.5 9.6a2.8 2.8 0 0 0 3.9 3.9" /><path d="m3.5 3.5 17 17" />',
+  'folder': '<path d="M3.5 6.5a1 1 0 0 1 1-1h4.4l1.6 2h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-14a1 1 0 0 1-1-1v-11Z" />',
+  'plus': '<path d="M12 5v14M5 12h14" />',
+  'trash': '<path d="M4.5 7h15" /><path d="M9.5 7V5a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v2" /><path d="M6.5 7l1 12.5a1 1 0 0 0 1 .9h7a1 1 0 0 0 1-.9l1-12.5" /><path d="M10 11v6M14 11v6" />',
+  'pencil': '<path d="M4 20l.9-3.9L15.6 5.4a1.5 1.5 0 0 1 2.1 0l1 1a1.5 1.5 0 0 1 0 2.1L8 19.1 4 20Z" /><path d="m13.8 7 3.2 3.2" />',
+  'arrow-left': '<path d="M19 12H5M11 6l-6 6 6 6" />',
+  'clock': '<circle cx="12" cy="12" r="8.5" /><path d="M12 7v5l3.5 2" />',
 }
 
 const markup = computed(() => {

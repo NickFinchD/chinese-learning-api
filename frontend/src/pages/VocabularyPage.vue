@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div @click="openMenuWordId = null">
     <h1 class="mb-8 text-3xl font-bold text-gray-900 dark:text-white">
       Словарь
     </h1>
@@ -155,6 +155,60 @@
             />
           </button>
 
+          <div class="absolute right-11 top-4">
+            <button
+              type="button"
+              title="Добавить в подборку"
+              class="leading-none text-gray-300 hover:text-gray-400 dark:text-gray-600 dark:hover:text-gray-400"
+              @click.stop="toggleCollectionMenu(word.id)"
+            >
+              <AppIcon name="folder" />
+            </button>
+
+            <div
+              v-if="openMenuWordId === word.id"
+              class="absolute right-0 top-7 z-10 w-56 rounded-xl border border-white/50 bg-white/90 p-2 shadow-lg backdrop-blur-xl dark:border-white/10 dark:bg-slate-900/95"
+              @click.stop
+            >
+              <div
+                v-if="collections.items.length === 0"
+                class="px-2 py-1.5 text-sm text-gray-500 dark:text-gray-400"
+              >
+                Нет подборок
+              </div>
+
+              <button
+                v-for="collection in collections.items"
+                :key="collection.id"
+                type="button"
+                class="block w-full truncate rounded-lg px-2 py-1.5 text-left text-sm text-gray-700 hover:bg-white/60 dark:text-gray-200 dark:hover:bg-white/10"
+                @click="onAddToCollection(word, collection.id)"
+              >
+                {{ collection.name }}
+              </button>
+
+              <div class="mt-1 flex gap-1 border-t border-white/50 pt-1 dark:border-white/10">
+                <input
+                  v-model="newCollectionName"
+                  placeholder="Новая подборка"
+                  class="min-w-0 flex-1 rounded-lg border border-white/50 bg-white/60 px-2 py-1 text-sm text-gray-900 outline-none dark:border-white/10 dark:bg-white/5 dark:text-white"
+                  @keyup.enter="onCreateAndAdd(word)"
+                >
+
+                <button
+                  type="button"
+                  class="shrink-0 rounded-lg bg-[var(--color-primary)] px-2 text-white"
+                  @click="onCreateAndAdd(word)"
+                >
+                  <AppIcon
+                    name="plus"
+                    :size="14"
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div class="mb-2 flex items-center gap-2 pr-8">
             <div class="font-hanzi text-2xl font-semibold text-gray-900 dark:text-white">
               {{ word.hanzi }}
@@ -186,6 +240,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
+import { useCollectionsStore } from '@/stores/collections'
 import { useLearningStore } from '@/stores/learning'
 import { useSavedWordsStore } from '@/stores/savedWords'
 import { useVocabularyStore } from '@/stores/vocabulary'
@@ -201,6 +256,34 @@ import type { Word } from '@/types/word'
 const vocabulary = useVocabularyStore()
 const savedWords = useSavedWordsStore()
 const learning = useLearningStore()
+const collections = useCollectionsStore()
+
+const openMenuWordId = ref<number | null>(null)
+const newCollectionName = ref('')
+
+function toggleCollectionMenu(wordId: number) {
+  openMenuWordId.value = openMenuWordId.value === wordId ? null : wordId
+}
+
+async function onAddToCollection(word: Word, collectionId: number) {
+  await collections.addWord(collectionId, word)
+  openMenuWordId.value = null
+}
+
+async function onCreateAndAdd(word: Word) {
+  const name = newCollectionName.value.trim()
+
+  if (!name) {
+    return
+  }
+
+  const collection = await collections.create(name)
+
+  await collections.addWord(collection.id, word)
+
+  newCollectionName.value = ''
+  openMenuWordId.value = null
+}
 
 const tab = ref<'all' | 'saved' | 'learned' | 'progress'>('all')
 
@@ -324,6 +407,7 @@ function formatTimeLeft(nextEligibleAt?: string): string {
 onMounted(() => {
   vocabulary.loadWords()
   savedWords.loadSavedWords()
+  collections.loadCollections()
 
   clockInterval = setInterval(() => {
     now.value = Date.now()

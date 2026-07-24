@@ -49,6 +49,16 @@
       </RouterLink>
 
       <RouterLink
+        to="/app/vocabulary/collections"
+        class="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
+        active-class="bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-semibold dark:bg-[var(--color-primary)]/20 dark:text-[var(--color-mint)]"
+        @click="$emit('close')"
+      >
+        <AppIcon name="folder" />
+        Подборки
+      </RouterLink>
+
+      <RouterLink
         to="/app/texts"
         class="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
         active-class="bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-semibold dark:bg-[var(--color-primary)]/20 dark:text-[var(--color-mint)]"
