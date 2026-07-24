@@ -13,7 +13,7 @@
       </p>
 
       <button
-        class="w-full rounded-full bg-[#41b3a3] px-4 py-3 font-semibold text-white shadow-lg shadow-[#41b3a3]/30 transition hover:bg-[#41b3a3]/90 disabled:cursor-not-allowed disabled:opacity-50"
+        class="w-full rounded-full bg-[var(--color-primary)] px-4 py-3 font-semibold text-white shadow-lg shadow-[var(--color-primary)]/30 transition hover:bg-[var(--color-primary)]/90 disabled:cursor-not-allowed disabled:opacity-50"
         :disabled="training.loading"
         @click="training.start()"
       >
@@ -40,7 +40,7 @@
 
         <RouterLink
           to="/app/vocabulary"
-          class="inline-block rounded-full bg-[#41b3a3] px-4 py-3 font-semibold text-white shadow-lg shadow-[#41b3a3]/30 transition hover:bg-[#41b3a3]/90"
+          class="inline-block rounded-full bg-[var(--color-primary)] px-4 py-3 font-semibold text-white shadow-lg shadow-[var(--color-primary)]/30 transition hover:bg-[var(--color-primary)]/90"
         >
           Перейти в словарь
         </RouterLink>
@@ -51,8 +51,12 @@
       v-else-if="training.allLearned"
       class="max-w-md"
     >
-      <p class="mb-6 text-gray-500 dark:text-gray-400">
-        Все сохранённые слова уже изучены 🎉 Сохраните новые слова в «Словаре», чтобы продолжить тренировку.
+      <p class="mb-6 flex items-center gap-2 text-gray-500 dark:text-gray-400">
+        <AppIcon
+          name="sparkles"
+          class="shrink-0 text-[var(--color-accent)]"
+        />
+        Все сохранённые слова уже изучены. Сохраните новые слова в «Словаре», чтобы продолжить тренировку.
       </p>
 
       <div class="flex flex-wrap gap-4">
@@ -66,7 +70,7 @@
 
         <RouterLink
           to="/app/vocabulary"
-          class="inline-block rounded-full bg-[#41b3a3] px-4 py-3 font-semibold text-white shadow-lg shadow-[#41b3a3]/30 transition hover:bg-[#41b3a3]/90"
+          class="inline-block rounded-full bg-[var(--color-primary)] px-4 py-3 font-semibold text-white shadow-lg shadow-[var(--color-primary)]/30 transition hover:bg-[var(--color-primary)]/90"
         >
           Перейти в словарь
         </RouterLink>
@@ -77,9 +81,14 @@
       v-else-if="training.isFinished"
       class="max-w-md"
     >
-      <div class="rounded-xl border border-white/50 bg-white/30 p-8 text-center shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
-        <div class="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
-          Тренировка завершена 🎉
+      <div class="animate-pop-in rounded-xl border border-white/50 bg-white/30 p-8 text-center shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+        <div class="mb-2 flex items-center justify-center gap-2 text-xl font-semibold text-gray-900 dark:text-white">
+          <AppIcon
+            name="sparkles"
+            :size="22"
+            class="text-[var(--color-accent)]"
+          />
+          Тренировка завершена
         </div>
 
         <p class="mb-6 text-gray-600 dark:text-gray-400">
@@ -87,7 +96,7 @@
         </p>
 
         <button
-          class="w-full rounded-full bg-[#41b3a3] px-4 py-3 font-semibold text-white shadow-lg shadow-[#41b3a3]/30 transition hover:bg-[#41b3a3]/90"
+          class="w-full rounded-full bg-[var(--color-primary)] px-4 py-3 font-semibold text-white shadow-lg shadow-[var(--color-primary)]/30 transition hover:bg-[var(--color-primary)]/90"
           @click="training.reset()"
         >
           Пройти ещё раз
@@ -103,9 +112,16 @@
         Слово {{ training.currentIndex + 1 }} из {{ training.questions.length }}
       </div>
 
-      <div class="rounded-xl border border-white/50 bg-white/30 p-6 text-center shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
-        <div class="mb-1 text-4xl font-bold text-gray-900 dark:text-white">
-          {{ training.currentQuestion.word.hanzi }}
+      <div
+        :key="training.currentIndex"
+        class="animate-fade-in-up rounded-xl border border-white/50 bg-white/30 p-6 text-center shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5"
+      >
+        <div class="mb-1 flex items-center justify-center gap-2">
+          <div class="font-hanzi text-4xl font-bold text-gray-900 dark:text-white">
+            {{ training.currentQuestion.word.hanzi }}
+          </div>
+
+          <AudioButton :text="training.currentQuestion.word.hanzi" />
         </div>
 
         <div class="mb-6 text-gray-500 dark:text-gray-400">
@@ -127,13 +143,17 @@
 
         <div
           v-if="training.lastProgress"
-          class="mt-4 text-sm"
+          class="animate-pop-in mt-4 text-sm"
         >
           <span
             v-if="training.lastProgress.learned"
-            class="font-semibold text-green-600 dark:text-green-400"
+            class="flex items-center gap-2 font-semibold text-green-600 dark:text-green-400"
           >
-            🎉 Слово изучено! Смотрите вкладку «Изучено» в словаре.
+            <AppIcon
+              name="check-circle"
+              :size="16"
+            />
+            Слово изучено! Смотрите вкладку «Изучено» в словаре.
           </span>
 
           <span
@@ -147,7 +167,7 @@
 
       <button
         v-if="training.answeredWordId !== null"
-        class="mt-6 w-full rounded-full bg-[#41b3a3] px-4 py-3 font-semibold text-white shadow-lg shadow-[#41b3a3]/30 transition hover:bg-[#41b3a3]/90"
+        class="mt-6 w-full rounded-full bg-[var(--color-primary)] px-4 py-3 font-semibold text-white shadow-lg shadow-[var(--color-primary)]/30 transition hover:bg-[var(--color-primary)]/90"
         @click="training.next()"
       >
         Далее
@@ -161,6 +181,8 @@ import { onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import { useWordTrainingStore } from '@/stores/wordTraining'
+import AppIcon from '@/components/base/AppIcon.vue'
+import AudioButton from '@/components/base/AudioButton.vue'
 
 const training = useWordTrainingStore()
 

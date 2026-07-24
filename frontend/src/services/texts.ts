@@ -16,3 +16,15 @@ export async function getText(id: number) {
 
   return response.data
 }
+
+export async function markTextRead(id: number) {
+  const response = await api.post<ApiResponse<{ status: string }>>(`/texts/${id}/read`)
+
+  return response.data
+}
+
+export async function markTextUnread(id: number) {
+  const response = await api.delete<ApiResponse<{ status: string }>>(`/texts/${id}/read`)
+
+  return response.data
+}

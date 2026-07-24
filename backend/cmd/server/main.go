@@ -10,11 +10,13 @@ import (
 	"github.com/NickFinchD/chinese-learning-api/internal/courses"
 	"github.com/NickFinchD/chinese-learning-api/internal/database"
 	"github.com/NickFinchD/chinese-learning-api/internal/gamification"
+	"github.com/NickFinchD/chinese-learning-api/internal/grammar"
 	"github.com/NickFinchD/chinese-learning-api/internal/learning"
 	"github.com/NickFinchD/chinese-learning-api/internal/lessons"
 	"github.com/NickFinchD/chinese-learning-api/internal/progress"
 	"github.com/NickFinchD/chinese-learning-api/internal/quizzes"
 	"github.com/NickFinchD/chinese-learning-api/internal/savedwords"
+	"github.com/NickFinchD/chinese-learning-api/internal/sentences"
 	"github.com/NickFinchD/chinese-learning-api/internal/texts"
 	"github.com/NickFinchD/chinese-learning-api/internal/words"
 	"github.com/gin-contrib/cors"
@@ -56,16 +58,29 @@ func main() {
 	quizzesService := quizzes.NewService(quizzesRepository)
 	quizzesHandler := quizzes.NewHandler(quizzesService)
 
+	grammarRepository := grammar.NewRepository(db)
+	grammarService := grammar.NewService(grammarRepository)
+
+	sentencesRepository := sentences.NewRepository(db)
+	sentencesService := sentences.NewService(sentencesRepository)
+	sentencesHandler := sentences.NewHandler(sentencesService)
+
 	lessonsRepository := lessons.NewRepository(db)
 	lessonsService := lessons.NewService(
 		lessonsRepository,
 		wordsRepository,
 		quizzesService,
+		grammarService,
+		sentencesService,
 	)
 	lessonsHandler := lessons.NewHandler(lessonsService)
 
+	gamificationRepository := gamification.NewRepository(db)
+	gamificationService := gamification.NewService(gamificationRepository)
+	gamificationHandler := gamification.NewHandler(gamificationService)
+
 	progressRepository := progress.NewRepository(db)
-	progressService := progress.NewService(progressRepository)
+	progressService := progress.NewService(progressRepository, gamificationService)
 	progressHandler := progress.NewHandler(progressService)
 
 	textsRepository := texts.NewRepository(db)
@@ -75,10 +90,6 @@ func main() {
 	learningRepository := learning.NewRepository(db)
 	learningService := learning.NewService(learningRepository)
 	learningHandler := learning.NewHandler(learningService)
-
-	gamificationRepository := gamification.NewRepository(db)
-	gamificationService := gamification.NewService(gamificationRepository)
-	gamificationHandler := gamification.NewHandler(gamificationService)
 	// =========================
 	// Router
 	// =========================
@@ -88,6 +99,9 @@ func main() {
 	router.Use(cors.New(cors.Config{
 		AllowOrigins: []string{
 			"http://localhost:5173",
+			// Also allow the dev machine's LAN address so the app is reachable
+			// from other devices (phone, tablet) on the same Wi-Fi network.
+			"http://192.168.1.246:5173",
 		},
 		AllowMethods: []string{
 			"GET",
@@ -166,6 +180,10 @@ func main() {
 	gamification.RegisterRoutes(
 		authorized.Group("/gamification"),
 		gamificationHandler,
+	)
+	sentences.RegisterRoutes(
+		authorized.Group("/sentences"),
+		sentencesHandler,
 	)
 
 	// =========================

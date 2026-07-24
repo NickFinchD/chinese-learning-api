@@ -7,7 +7,7 @@
       </h1>
 
       <p class="mb-8 text-gray-500 dark:text-gray-400">
-        С возвращением 👋
+        С возвращением
       </p>
 
       <form
@@ -26,10 +26,27 @@
           placeholder="Пароль"
         />
 
+        <p
+          v-if="error"
+          class="text-sm text-red-600 dark:text-red-400"
+        >
+          {{ error }}
+        </p>
+
         <BaseButton type="submit">
           Войти
         </BaseButton>
       </form>
+
+      <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+        Нет аккаунта?
+        <RouterLink
+          to="/register"
+          class="font-semibold text-[var(--color-primary)] hover:text-[var(--color-primary)]/80"
+        >
+          Зарегистрироваться
+        </RouterLink>
+      </p>
 
     </BaseCard>
   </div>
@@ -37,7 +54,8 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { isAxiosError } from 'axios'
+import { RouterLink, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { login as loginRequest } from '@/services'
 
@@ -48,21 +66,26 @@ import BaseInput from '@/components/base/BaseInput.vue'
 
 const email = ref('')
 const password = ref('')
+const error = ref('')
 
 const router = useRouter()
 const authStore = useAuthStore()
 async function login() {
+  error.value = ''
+
   try {
     await loginRequest({
-  email: email.value,
-  password: password.value,
-})
+      email: email.value,
+      password: password.value,
+    })
 
-await authStore.loadUser()
+    await authStore.loadUser()
 
-await router.push('/app')
-  } catch (error) {
-    console.error(error)
+    await router.push('/app')
+  } catch (err) {
+    error.value = isAxiosError(err)
+      ? err.response?.data?.message ?? 'Не удалось войти'
+      : 'Не удалось войти'
   }
 }
 </script>

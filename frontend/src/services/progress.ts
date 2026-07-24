@@ -25,7 +25,7 @@ export async function updateLessonStep(lessonId: number, currentStep: number) {
 }
 
 export async function completeLesson(lessonId: number, score: number) {
-  const response = await api.post<ApiResponse<{ status: string; score: number }>>(
+  const response = await api.post<ApiResponse<{ status: string; score: number; xp_awarded: number }>>(
     `/lessons/${lessonId}/complete`,
     { score },
   )

@@ -1,7 +1,7 @@
 <template>
   <div>
     <h1 class="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
-      С возвращением{{ auth.user ? `, ${auth.user.username}` : '' }} 👋
+      С возвращением{{ auth.user ? `, ${auth.user.username}` : '' }}
     </h1>
 
     <p class="mb-8 text-gray-600 dark:text-gray-400">
@@ -10,7 +10,7 @@
 
     <div class="mb-8 grid gap-6 sm:grid-cols-3">
       <div class="rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
-        <div class="text-3xl font-bold text-[#41b3a3]">
+        <div class="text-3xl font-bold text-[var(--color-primary)]">
           {{ courses.items.length }}
         </div>
         <div class="text-gray-500 dark:text-gray-400">
@@ -19,7 +19,7 @@
       </div>
 
       <div class="rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
-        <div class="text-3xl font-bold text-[#41b3a3]">
+        <div class="text-3xl font-bold text-[var(--color-primary)]">
           {{ learning.learnedWords.length }}
         </div>
         <div class="text-gray-500 dark:text-gray-400">
@@ -28,7 +28,7 @@
       </div>
 
       <div class="rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
-        <div class="text-3xl font-bold text-[#41b3a3]">
+        <div class="text-3xl font-bold text-[var(--color-primary)]">
           {{ texts.items.length }}
         </div>
         <div class="text-gray-500 dark:text-gray-400">
@@ -40,7 +40,7 @@
     <div class="flex flex-wrap gap-4">
       <RouterLink
         to="/app/courses"
-        class="rounded-full bg-[#41b3a3] px-4 py-3 font-semibold text-white shadow-lg shadow-[#41b3a3]/30 transition hover:bg-[#41b3a3]/90"
+        class="rounded-full bg-[var(--color-primary)] px-4 py-3 font-semibold text-white shadow-lg shadow-[var(--color-primary)]/30 transition hover:bg-[var(--color-primary)]/90"
       >
         Продолжить обучение
       </RouterLink>

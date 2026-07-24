@@ -2,7 +2,17 @@
   <main class="relative flex min-h-screen items-center justify-center px-4">
     <ThemeToggle class="absolute right-4 top-4" />
 
-    <RouterView />
+    <RouterView v-slot="{ Component, route }">
+      <Transition
+        name="page"
+        mode="out-in"
+      >
+        <component
+          :is="Component"
+          :key="route.fullPath"
+        />
+      </Transition>
+    </RouterView>
   </main>
 </template>
 

@@ -14,6 +14,7 @@ export interface Achievement {
   tier: number
   metric: string
   threshold: number
+  current_value: number
   xp_reward: number
   unlocked: boolean
   unlocked_at?: string

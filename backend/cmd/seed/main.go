@@ -1,14 +1,18 @@
-// Command seed (re)generates lessons 7..50 for the "HSK 1" course, extending
-// the hand-authored lessons 1..6 with programmatically assembled practice
-// content: new words are introduced in topical batches (e.g. "Местоимения",
-// "Числа 2") a few at a time, mixed with review words drawn from everything
-// introduced so far, plus vocabulary quizzes and grammar quizzes (from a
-// hand-written HSK1 grammar bank). It is meant to be run once against a
-// database that already has migrations 000001..000016 applied:
+// Command seed (re)generates lessons 2.. for the "HSK 1" course, extending
+// the single hand-authored lesson 1 ("Приветствие") with programmatically
+// assembled practice content: new words are introduced in topical batches
+// (e.g. "Местоимения", "Числа 2") at most 3 at a time, mixed with review
+// words drawn from everything introduced so far, plus vocabulary quizzes and
+// grammar quizzes (from a hand-written HSK1 grammar bank). The generated
+// range is followed by the hand-authored grammar-explanation lesson and its
+// sentence-builder review lesson (content seeded by migrations
+// 000026/000029, placed here at whatever lesson_number comes next). It is
+// meant to be run once against a database that already has migrations
+// 000001..000029 applied:
 //
 //	go run ./cmd/seed
 //
-// It is destructive-but-idempotent with respect to lesson numbers 7..50 for
+// It is destructive-but-idempotent with respect to lesson numbers 2.. for
 // the HSK1 course: it deletes any lessons already in that range (and their
 // steps/progress, via ON DELETE CASCADE) before regenerating them, so it can
 // be re-run freely to pick up changes to the topic list or grammar bank.
@@ -28,10 +32,10 @@ import (
 )
 
 const (
-	firstGeneratedLesson    = 7
-	totalLessons            = 50
+	firstGeneratedLesson    = 2
+	totalLessons            = 60
 	wordStepsPerLesson      = 12
-	vocabQuizzesPerLesson   = 6
+	bonusReviewQuizzes      = 3 // extra quizzes drawn from review words, on top of the guaranteed one-per-new-word
 	grammarQuizzesPerLesson = 2
 )
 
@@ -46,10 +50,18 @@ type topicGroup struct {
 	hanzi []string
 }
 
-// Topics cover the 109 HSK1 words not already introduced by the hand-authored
-// lessons 1..6 (Приветствие/Числа/Семья/Глаголы и действия/Время и даты/Еда и
-// напитки). Order defines the pedagogical progression.
+// Topics cover every HSK1 word not already introduced by the hand-authored
+// lesson 1 ("Приветствие"). The first five groups replace what used to be
+// fixed lessons 2..6 (Числа/Семья/Глаголы и действия/Время и даты/Еда и
+// напитки) — those introduced up to 12 new words in a single lesson, so they
+// were folded into the same 3-new-words-per-lesson topic loop as everything
+// else below. Order defines the pedagogical progression.
 var topics = []topicGroup{
+	{"Числа", []string{"一", "二", "三", "四", "五", "六", "七", "八", "九", "十"}},
+	{"Семья", []string{"爸爸", "妈妈", "儿子", "女儿", "我们", "你们"}},
+	{"Глаголы и действия", []string{"吃", "喝", "看", "听", "说", "读", "写", "买", "去", "来", "做", "喜欢"}},
+	{"Время и даты", []string{"今天", "明天", "昨天", "现在", "年", "月", "星期", "点"}},
+	{"Еда и напитки", []string{"茶", "水", "米饭", "菜", "水果", "苹果"}},
 	{"Местоимения", []string{"我", "你", "他", "她", "那", "这"}},
 	{"Частицы и грамматика", []string{"是", "不", "有", "的", "都", "和", "了", "吗", "没", "呢", "也"}},
 	{"Вопросительные слова", []string{"多少", "几", "哪", "哪儿", "谁", "什么", "怎么", "怎么样"}},
@@ -223,8 +235,16 @@ func main() {
 
 		lessonWords := append(append([]wordInfo{}, newWords...), reviewPool[:reviewCount]...)
 
+		// Pure-review lessons ("Итоговое повторение") introduce no new
+		// words — guarantee quizzes for their whole review selection
+		// instead, so they stay just as practice-heavy as before.
+		guaranteed, bonus := newWords, bonusReviewQuizzes
+		if len(newWords) == 0 {
+			guaranteed, bonus = lessonWords, 0
+		}
+
 		if err := createLesson(ctx, db, courseID, lessonNum, title, description, lessonWords,
-			vocabQuizzesPerLesson, grammarQuizzesPerLesson, &grammarIdx, grammarQuizIDs,
+			guaranteed, bonus, grammarQuizzesPerLesson, &grammarIdx, grammarQuizIDs,
 			vocabQuizCache, translationByID, allWordIDs, rng); err != nil {
 			log.Fatalf("failed to create lesson %d (%s): %v", lessonNum, title, err)
 		}
@@ -281,7 +301,129 @@ func main() {
 		reviewPart++
 	}
 
+	// Grammar-explanation lesson + its sentence-builder review lesson (seeded
+	// once by migration 000026/000029) are appended right after the
+	// generated content, at whatever lesson_number comes next. Looked up by
+	// id rather than duplicated, since the underlying grammar_notes/
+	// sentence_exercises rows already exist.
+	if err := createGrammarLesson(ctx, db, courseID, lessonNum); err != nil {
+		log.Fatalf("failed to create grammar lesson %d: %v", lessonNum, err)
+	}
+	fmt.Printf("Created lesson %d: Как задавать вопросы\n", lessonNum)
+	lessonNum++
+
+	if err := createSentenceReviewLesson(ctx, db, courseID, lessonNum); err != nil {
+		log.Fatalf("failed to create sentence-builder review lesson %d: %v", lessonNum, err)
+	}
+	fmt.Printf("Created lesson %d: Повторение: вопросы\n", lessonNum)
+
 	fmt.Println("Done.")
+}
+
+func createGrammarLesson(ctx context.Context, db interface {
+	Begin(ctx context.Context) (pgx.Tx, error)
+}, courseID int64, lessonNum int) error {
+
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	var lessonID int64
+
+	err = tx.QueryRow(ctx, `
+		INSERT INTO lessons (course_id, title, description, lesson_number)
+		VALUES ($1, 'Как задавать вопросы', 'Грамматика: вопрос с 吗 и вопросительные слова', $2)
+		RETURNING id
+	`, courseID, lessonNum).Scan(&lessonID)
+	if err != nil {
+		return err
+	}
+
+	rows, err := tx.Query(ctx, `SELECT id FROM grammar_notes ORDER BY id`)
+	if err != nil {
+		return err
+	}
+
+	noteIDs := make([]int64, 0)
+	for rows.Next() {
+		var noteID int64
+		if err := rows.Scan(&noteID); err != nil {
+			rows.Close()
+			return err
+		}
+		noteIDs = append(noteIDs, noteID)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	for i, noteID := range noteIDs {
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO lesson_steps (lesson_id, step_type, entity_id, sort_order)
+			VALUES ($1, 'grammar', $2, $3)
+		`, lessonID, noteID, i+1); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(ctx)
+}
+
+func createSentenceReviewLesson(ctx context.Context, db interface {
+	Begin(ctx context.Context) (pgx.Tx, error)
+}, courseID int64, lessonNum int) error {
+
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	var lessonID int64
+
+	err = tx.QueryRow(ctx, `
+		INSERT INTO lessons (course_id, title, description, lesson_number)
+		VALUES ($1, 'Повторение: вопросы', 'Практика: собери вопросительное предложение', $2)
+		RETURNING id
+	`, courseID, lessonNum).Scan(&lessonID)
+	if err != nil {
+		return err
+	}
+
+	// The first 5 sentence_exercises rows are the original HSK1 question
+	// sentences seeded by migration 000026; later migrations only append.
+	rows, err := tx.Query(ctx, `SELECT id FROM sentence_exercises WHERE id BETWEEN 1 AND 5 ORDER BY id`)
+	if err != nil {
+		return err
+	}
+
+	exerciseIDs := make([]int64, 0)
+	for rows.Next() {
+		var exerciseID int64
+		if err := rows.Scan(&exerciseID); err != nil {
+			rows.Close()
+			return err
+		}
+		exerciseIDs = append(exerciseIDs, exerciseID)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	for i, exerciseID := range exerciseIDs {
+		if _, err := tx.Exec(ctx, `
+			INSERT INTO lesson_steps (lesson_id, step_type, entity_id, sort_order)
+			VALUES ($1, 'sentence_builder', $2, $3)
+		`, lessonID, exerciseID, i+1); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit(ctx)
 }
 
 func loadWords(ctx context.Context, db pgxPool) ([]wordInfo, error) {
@@ -405,7 +547,8 @@ func createLesson(
 	title string,
 	description string,
 	lessonWords []wordInfo,
-	vocabQuizCount int,
+	newWords []wordInfo, // every one of these gets a quiz — guaranteed practice for what's actually taught this lesson
+	bonusQuizCount int, // extra quizzes drawn from the remaining (review) words
 	grammarQuizCount int,
 	grammarIdx *int,
 	grammarQuizIDs []int64,
@@ -447,17 +590,31 @@ func createLesson(
 		sortOrder++
 	}
 
-	quizCandidates := append([]wordInfo{}, lessonWords...)
-
-	rng.Shuffle(len(quizCandidates), func(i, j int) {
-		quizCandidates[i], quizCandidates[j] = quizCandidates[j], quizCandidates[i]
-	})
-
-	if vocabQuizCount > len(quizCandidates) {
-		vocabQuizCount = len(quizCandidates)
+	newWordIDs := make(map[int64]bool, len(newWords))
+	for _, w := range newWords {
+		newWordIDs[w.ID] = true
 	}
 
-	for i := 0; i < vocabQuizCount; i++ {
+	reviewOnly := make([]wordInfo, 0, len(lessonWords))
+	for _, w := range lessonWords {
+		if !newWordIDs[w.ID] {
+			reviewOnly = append(reviewOnly, w)
+		}
+	}
+
+	rng.Shuffle(len(reviewOnly), func(i, j int) {
+		reviewOnly[i], reviewOnly[j] = reviewOnly[j], reviewOnly[i]
+	})
+
+	if bonusQuizCount > len(reviewOnly) {
+		bonusQuizCount = len(reviewOnly)
+	}
+
+	// Every new word is guaranteed a quiz; bonus review quizzes are appended
+	// on top so practice never falls short of what was just taught.
+	quizCandidates := append(append([]wordInfo{}, newWords...), reviewOnly[:bonusQuizCount]...)
+
+	for i := 0; i < len(quizCandidates); i++ {
 
 		w := quizCandidates[i]
 

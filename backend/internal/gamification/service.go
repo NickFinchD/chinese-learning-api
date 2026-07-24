@@ -30,6 +30,12 @@ func NewService(repository repository) *Service {
 	}
 }
 
+// AwardXP grants a flat XP amount outside of the achievement system, e.g.
+// for completing a lesson. Safe for other domains to call directly.
+func (s *Service) AwardXP(ctx context.Context, userID int64, amount int) error {
+	return s.repository.AddXP(ctx, userID, amount)
+}
+
 func (s *Service) Heartbeat(ctx context.Context, userID int64) error {
 
 	if err := s.repository.Heartbeat(ctx, userID, maxHeartbeatGapSeconds); err != nil {
@@ -70,15 +76,16 @@ func (s *Service) GetProgress(ctx context.Context, userID int64) (*Progress, err
 }
 
 type AchievementStatus struct {
-	Code        string
-	Title       string
-	Description string
-	Tier        int16
-	Metric      string
-	Threshold   int
-	XPReward    int
-	Unlocked    bool
-	UnlockedAt  *time.Time
+	Code         string
+	Title        string
+	Description  string
+	Tier         int16
+	Metric       string
+	Threshold    int
+	CurrentValue int
+	XPReward     int
+	Unlocked     bool
+	UnlockedAt   *time.Time
 }
 
 func (s *Service) GetAchievements(ctx context.Context, userID int64) ([]AchievementStatus, error) {
@@ -97,6 +104,11 @@ func (s *Service) GetAchievements(ctx context.Context, userID int64) ([]Achievem
 		return nil, err
 	}
 
+	metrics, err := s.currentMetrics(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
 	result := make([]AchievementStatus, 0, len(catalog))
 
 	for _, a := range catalog {
@@ -104,14 +116,15 @@ func (s *Service) GetAchievements(ctx context.Context, userID int64) ([]Achievem
 		unlockedAt, isUnlocked := unlocked[a.ID]
 
 		status := AchievementStatus{
-			Code:        a.Code,
-			Title:       a.Title,
-			Description: a.Description,
-			Tier:        a.Tier,
-			Metric:      a.Metric,
-			Threshold:   a.Threshold,
-			XPReward:    a.XPReward,
-			Unlocked:    isUnlocked,
+			Code:         a.Code,
+			Title:        a.Title,
+			Description:  a.Description,
+			Tier:         a.Tier,
+			Metric:       a.Metric,
+			Threshold:    a.Threshold,
+			CurrentValue: metrics[a.Metric],
+			XPReward:     a.XPReward,
+			Unlocked:     isUnlocked,
 		}
 
 		if isUnlocked {

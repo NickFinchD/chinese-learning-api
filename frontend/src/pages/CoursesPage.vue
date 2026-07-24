@@ -30,7 +30,7 @@
         </p>
 
         <span
-          class="inline-flex rounded-full bg-[#41b3a3]/15 px-3 py-1 text-sm font-medium text-[#41b3a3] dark:bg-[#41b3a3]/20 dark:text-[#85dcba]"
+          class="inline-flex rounded-full bg-[var(--color-primary)]/15 px-3 py-1 text-sm font-medium text-[var(--color-primary)] dark:bg-[var(--color-primary)]/20 dark:text-[var(--color-mint)]"
         >
           HSK {{ course.hsk_level }}
         </span>

@@ -23,27 +23,29 @@ func toProgressResponse(p *Progress) ProgressResponse {
 }
 
 type AchievementResponse struct {
-	Code        string     `json:"code"`
-	Title       string     `json:"title"`
-	Description string     `json:"description"`
-	Tier        int16      `json:"tier"`
-	Metric      string     `json:"metric"`
-	Threshold   int        `json:"threshold"`
-	XPReward    int        `json:"xp_reward"`
-	Unlocked    bool       `json:"unlocked"`
-	UnlockedAt  *time.Time `json:"unlocked_at,omitempty"`
+	Code         string     `json:"code"`
+	Title        string     `json:"title"`
+	Description  string     `json:"description"`
+	Tier         int16      `json:"tier"`
+	Metric       string     `json:"metric"`
+	Threshold    int        `json:"threshold"`
+	CurrentValue int        `json:"current_value"`
+	XPReward     int        `json:"xp_reward"`
+	Unlocked     bool       `json:"unlocked"`
+	UnlockedAt   *time.Time `json:"unlocked_at,omitempty"`
 }
 
 func toAchievementResponse(a AchievementStatus) AchievementResponse {
 	return AchievementResponse{
-		Code:        a.Code,
-		Title:       a.Title,
-		Description: a.Description,
-		Tier:        a.Tier,
-		Metric:      a.Metric,
-		Threshold:   a.Threshold,
-		XPReward:    a.XPReward,
-		Unlocked:    a.Unlocked,
-		UnlockedAt:  a.UnlockedAt,
+		Code:         a.Code,
+		Title:        a.Title,
+		Description:  a.Description,
+		Tier:         a.Tier,
+		Metric:       a.Metric,
+		Threshold:    a.Threshold,
+		CurrentValue: a.CurrentValue,
+		XPReward:     a.XPReward,
+		Unlocked:     a.Unlocked,
+		UnlockedAt:   a.UnlockedAt,
 	}
 }

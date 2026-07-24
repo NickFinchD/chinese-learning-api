@@ -1,6 +1,6 @@
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 
-import { getText, getTexts } from '@/services/texts'
+import { getText, getTexts, markTextRead, markTextUnread } from '@/services/texts'
 
 import type { TextItem } from '@/types/text'
 
@@ -36,5 +36,33 @@ export const useTextsStore = defineStore('texts', {
         this.loading = false
       }
     },
+
+    async markRead(id: number) {
+      await markTextRead(id)
+
+      this.applyStatus(id, 'completed')
+    },
+
+    async markUnread(id: number) {
+      await markTextUnread(id)
+
+      this.applyStatus(id, 'in_progress')
+    },
+
+    applyStatus(id: number, status: TextItem['status']) {
+      if (this.current?.id === id) {
+        this.current.status = status
+      }
+
+      const item = this.items.find(text => text.id === id)
+
+      if (item) {
+        item.status = status
+      }
+    },
   },
 })
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useTextsStore, import.meta.hot))
+}

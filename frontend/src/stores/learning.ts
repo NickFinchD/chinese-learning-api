@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 
 import { getInProgressWords, getLearnedWords } from '@/services/learning'
 
@@ -40,3 +40,7 @@ export const useLearningStore = defineStore('learning', {
     },
   },
 })
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useLearningStore, import.meta.hot))
+}

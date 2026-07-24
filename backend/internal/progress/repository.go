@@ -132,14 +132,22 @@ func (r *Repository) UpdateStep(
 
 	return err
 }
+// CompleteLesson marks the lesson completed and reports whether it had
+// already been completed before this call (e.g. a retake) — the CTE
+// captures the pre-update row so the check is atomic with the update.
 func (r *Repository) CompleteLesson(
 	ctx context.Context,
 	userID int64,
 	lessonID int64,
 	score int,
-) error {
+) (alreadyCompleted bool, err error) {
 
 	query := `
+		WITH prev AS (
+			SELECT completed_at
+			FROM user_lesson_progress
+			WHERE user_id = $1 AND lesson_id = $2
+		)
 		UPDATE user_lesson_progress
 		SET
 			status = 'completed',
@@ -149,17 +157,18 @@ func (r *Repository) CompleteLesson(
 		WHERE
 			user_id = $1
 			AND lesson_id = $2
+		RETURNING (SELECT completed_at FROM prev) IS NOT NULL
 	`
 
-	_, err := r.db.Exec(
+	err = r.db.QueryRow(
 		ctx,
 		query,
 		userID,
 		lessonID,
 		score,
-	)
+	).Scan(&alreadyCompleted)
 
-	return err
+	return alreadyCompleted, err
 }
 func (r *Repository) UpdateCourseProgress(
 	ctx context.Context,

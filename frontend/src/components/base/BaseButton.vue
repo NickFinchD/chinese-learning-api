@@ -2,7 +2,7 @@
   <button
     :type="type"
     :disabled="disabled"
-    class="w-full rounded-full bg-[#41b3a3] px-4 py-3 font-semibold text-white shadow-lg shadow-[#41b3a3]/30 transition hover:bg-[#41b3a3]/90 disabled:cursor-not-allowed disabled:opacity-50"
+    class="w-full rounded-full bg-[var(--color-primary)] px-4 py-3 font-semibold text-white shadow-lg shadow-[var(--color-primary)]/30 transition hover:bg-[var(--color-primary)]/90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
   >
     <slot />
   </button>

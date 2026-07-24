@@ -3,6 +3,85 @@
 /* Manual (class-based) dark mode instead of only following the OS preference */
 @custom-variant dark (&:where(.dark, .dark *));
 
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+}
+
+/*
+ * Font used for Chinese (hanzi) text, switchable from Settings. Defaults to
+ * Noto Sans SC and is overridden at runtime via an inline CSS custom
+ * property on <html> (see stores/fonts.ts), persisted in localStorage.
+ */
+.font-hanzi {
+  font-family: var(--font-hanzi, "Noto Sans SC", "Manrope", ui-sans-serif, sans-serif);
+}
+
+/* Route transition (see App.vue) */
+.page-enter-active,
+.page-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.page-enter-from,
+.page-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-pop-in {
+  animation: pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes blob-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(3%, -4%) scale(1.06);
+  }
+  66% {
+    transform: translate(-4%, 3%) scale(0.96);
+  }
+}
+.animate-blob {
+  animation: blob-drift 20s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-blob,
+  .animate-fade-in-up,
+  .animate-pop-in,
+  .page-enter-active,
+  .page-leave-active {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
 /*
  * Palette reference (from дизайн/цвет.jpg) — used directly as Tailwind
  * arbitrary values in components, e.g. bg-[#41b3a3] or bg-[#41b3a3]/40 for
@@ -10,7 +89,7 @@
  *
  * Not defined as CSS custom properties here on purpose: the installed
  * tailwindcss 4.3.2 (a) doesn't turn `@theme` custom color keys into
- * bg-*/text-*/border-* utilities — it passes the block through unprocessed
+ * bg-, text- and border- utilities — it passes the block through unprocessed
  * — and (b) its CSS optimizer strips plain `:root { --x: ... }` custom
  * properties as "unused" even when referenced via var() in an arbitrary
  * value. Both confirmed by inspecting the compiled dev output. Literal hex

@@ -1,3 +1,5 @@
+export type TextStatus = 'not_started' | 'in_progress' | 'completed'
+
 export interface TextItem {
   id: number
   title: string
@@ -5,4 +7,5 @@ export interface TextItem {
   pinyin: string
   translation: string
   hsk_level: number
+  status: TextStatus
 }

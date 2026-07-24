@@ -9,6 +9,8 @@ func (s *Service) loadSteps(
 
 	wordIDs := make([]int64, 0)
 	quizIDs := make([]int64, 0)
+	grammarIDs := make([]int64, 0)
+	sentenceIDs := make([]int64, 0)
 
 	for _, step := range steps {
 
@@ -23,6 +25,16 @@ func (s *Service) loadSteps(
 			if step.EntityID != nil {
 				quizIDs = append(quizIDs, *step.EntityID)
 			}
+
+		case "grammar":
+			if step.EntityID != nil {
+				grammarIDs = append(grammarIDs, *step.EntityID)
+			}
+
+		case "sentence_builder":
+			if step.EntityID != nil {
+				sentenceIDs = append(sentenceIDs, *step.EntityID)
+			}
 		}
 	}
 
@@ -36,8 +48,20 @@ func (s *Service) loadSteps(
 		return nil, err
 	}
 
+	grammarNotes, err := s.grammarProvider.GetByIDs(ctx, grammarIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	sentenceExercises, err := s.sentenceProvider.GetByIDs(ctx, sentenceIDs)
+	if err != nil {
+		return nil, err
+	}
+
 	wordMap := make(map[int64]any)
 	quizMap := make(map[int64]any)
+	grammarMap := make(map[int64]any)
+	sentenceMap := make(map[int64]any)
 
 	for _, word := range words {
 		wordMap[word.ID] = word
@@ -45,6 +69,14 @@ func (s *Service) loadSteps(
 
 	for _, quiz := range quizzes {
 		quizMap[quiz.ID] = quiz
+	}
+
+	for _, note := range grammarNotes {
+		grammarMap[note.ID] = note
+	}
+
+	for _, exercise := range sentenceExercises {
+		sentenceMap[exercise.ID] = exercise
 	}
 
 	result := make([]LessonStepResponse, 0, len(steps))
@@ -63,6 +95,16 @@ func (s *Service) loadSteps(
 		case "quiz":
 			if step.EntityID != nil {
 				data = quizMap[*step.EntityID]
+			}
+
+		case "grammar":
+			if step.EntityID != nil {
+				data = grammarMap[*step.EntityID]
+			}
+
+		case "sentence_builder":
+			if step.EntityID != nil {
+				data = sentenceMap[*step.EntityID]
 			}
 
 		default:

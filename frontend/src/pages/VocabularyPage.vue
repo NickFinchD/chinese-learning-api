@@ -12,22 +12,12 @@
         @update:model-value="onSearchChange"
       />
 
-      <select
-        v-model.number="vocabulary.hsk"
-        class="rounded-xl border border-white/50 bg-white/40 px-4 py-3 text-gray-900 outline-none backdrop-blur-md transition focus:border-[#41b3a3] dark:border-white/10 dark:bg-white/5 dark:text-white"
-        @change="vocabulary.loadWords()"
-      >
-        <option :value="0">
-          Любой уровень HSK
-        </option>
-        <option
-          v-for="level in 6"
-          :key="level"
-          :value="level"
-        >
-          HSK {{ level }}
-        </option>
-      </select>
+      <BaseSelect
+        v-model="vocabulary.hsk"
+        class="w-56"
+        :options="hskOptions"
+        @update:model-value="vocabulary.loadWords()"
+      />
 
       <div class="ml-auto flex gap-2 rounded-xl border border-white/50 bg-white/30 p-1 backdrop-blur-md dark:border-white/10 dark:bg-white/5">
         <button
@@ -67,8 +57,9 @@
     <template v-if="tab === 'progress'">
       <div
         v-if="learning.loadingInProgress"
-        class="text-gray-500 dark:text-gray-400"
+        class="flex items-center gap-2 text-gray-500 dark:text-gray-400"
       >
+        <BaseSpinner />
         Загрузка...
       </div>
 
@@ -84,16 +75,22 @@
         class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
       >
         <div
-          v-for="word in learning.inProgressWords"
+          v-for="(word, index) in learning.inProgressWords"
           :key="word.word_id"
-          class="rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5"
+          class="animate-fade-in-up rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-white/5"
+          :style="{ animationDelay: `${Math.min(index * 40, 300)}ms` }"
         >
           <div class="mb-2 flex items-center gap-2">
-            <div class="text-2xl font-semibold text-gray-900 dark:text-white">
+            <div class="font-hanzi text-2xl font-semibold text-gray-900 dark:text-white">
               {{ word.hanzi }}
             </div>
 
-            <span class="inline-flex rounded-full bg-[#41b3a3]/15 px-3 py-1 text-xs font-medium text-[#41b3a3] dark:bg-[#41b3a3]/20 dark:text-[#85dcba]">
+            <AudioButton
+              :text="word.hanzi"
+              size="sm"
+            />
+
+            <span class="inline-flex rounded-full bg-[var(--color-primary)]/15 px-3 py-1 text-xs font-medium text-[var(--color-primary)] dark:bg-[var(--color-primary)]/20 dark:text-[var(--color-mint)]">
               HSK {{ word.hsk_level }}
             </span>
           </div>
@@ -108,7 +105,7 @@
 
           <div class="mb-2 h-2 overflow-hidden rounded-full bg-gray-200/50 dark:bg-white/10">
             <div
-              class="h-full bg-[#41b3a3] transition-all duration-300"
+              class="h-full bg-[var(--color-primary)] transition-all duration-300"
               :style="{ width: `${(word.stage / word.max_stage) * 100}%` }"
             />
           </div>
@@ -124,8 +121,9 @@
     <template v-else>
       <div
         v-if="loading"
-        class="text-gray-500 dark:text-gray-400"
+        class="flex items-center gap-2 text-gray-500 dark:text-gray-400"
       >
+        <BaseSpinner />
         Загрузка...
       </div>
 
@@ -141,24 +139,33 @@
         class="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
       >
         <div
-          v-for="word in visibleWords"
+          v-for="(word, index) in visibleWords"
           :key="word.id"
-          class="relative rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5"
+          class="animate-fade-in-up relative rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-white/5"
+          :style="{ animationDelay: `${Math.min(index * 40, 300)}ms` }"
         >
           <button
-            class="absolute right-4 top-4 text-xl leading-none"
-            :class="isSaved(word.id) ? 'text-[#e8a87c]' : 'text-gray-300 hover:text-gray-400 dark:text-gray-600 dark:hover:text-gray-400'"
+            class="absolute right-4 top-4 leading-none"
+            :class="isSaved(word.id) ? 'text-[var(--color-accent)]' : 'text-gray-300 hover:text-gray-400 dark:text-gray-600 dark:hover:text-gray-400'"
             @click="toggleSaved(word)"
           >
-            {{ isSaved(word.id) ? '★' : '☆' }}
+            <AppIcon
+              name="star"
+              :filled="isSaved(word.id)"
+            />
           </button>
 
           <div class="mb-2 flex items-center gap-2 pr-8">
-            <div class="text-2xl font-semibold text-gray-900 dark:text-white">
+            <div class="font-hanzi text-2xl font-semibold text-gray-900 dark:text-white">
               {{ word.hanzi }}
             </div>
 
-            <span class="inline-flex rounded-full bg-[#41b3a3]/15 px-3 py-1 text-xs font-medium text-[#41b3a3] dark:bg-[#41b3a3]/20 dark:text-[#85dcba]">
+            <AudioButton
+              :text="word.hanzi"
+              size="sm"
+            />
+
+            <span class="inline-flex rounded-full bg-[var(--color-primary)]/15 px-3 py-1 text-xs font-medium text-[var(--color-primary)] dark:bg-[var(--color-primary)]/20 dark:text-[var(--color-mint)]">
               HSK {{ word.hsk_level }}
             </span>
           </div>
@@ -184,6 +191,10 @@ import { useSavedWordsStore } from '@/stores/savedWords'
 import { useVocabularyStore } from '@/stores/vocabulary'
 
 import BaseInput from '@/components/base/BaseInput.vue'
+import BaseSelect from '@/components/base/BaseSelect.vue'
+import AppIcon from '@/components/base/AppIcon.vue'
+import AudioButton from '@/components/base/AudioButton.vue'
+import BaseSpinner from '@/components/base/BaseSpinner.vue'
 
 import type { Word } from '@/types/word'
 
@@ -192,6 +203,11 @@ const savedWords = useSavedWordsStore()
 const learning = useLearningStore()
 
 const tab = ref<'all' | 'saved' | 'learned' | 'progress'>('all')
+
+const hskOptions = [
+  { value: 0, label: 'Любой уровень HSK' },
+  ...Array.from({ length: 6 }, (_, index) => ({ value: index + 1, label: `HSK ${index + 1}` })),
+]
 
 let searchTimeout: ReturnType<typeof setTimeout> | undefined
 

@@ -1,61 +1,91 @@
 <template>
-  <aside class="w-64 border-r border-white/50 bg-white/30 backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+  <Transition
+    enter-active-class="transition-opacity duration-200"
+    enter-from-class="opacity-0"
+    leave-active-class="transition-opacity duration-200"
+    leave-to-class="opacity-0"
+  >
+    <div
+      v-if="open"
+      class="fixed inset-0 z-30 bg-black/40 md:hidden"
+      @click="$emit('close')"
+    />
+  </Transition>
+
+  <aside
+    class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full border-r border-white/50 bg-white/70 backdrop-blur-xl transition-transform duration-200 md:static md:z-auto md:translate-x-0 md:bg-white/30 dark:border-white/10 dark:bg-slate-950/90 dark:md:bg-white/5"
+    :class="{ 'translate-x-0': open }"
+  >
     <nav class="flex flex-col gap-2 p-4">
 
       <RouterLink
         to="/app"
-        class="rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
-        active-class="bg-[#41b3a3]/15 text-[#41b3a3] font-semibold dark:bg-[#41b3a3]/20 dark:text-[#85dcba]"
+        class="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
+        active-class="bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-semibold dark:bg-[var(--color-primary)]/20 dark:text-[var(--color-mint)]"
+        @click="$emit('close')"
       >
-        🏠 Главная
+        <AppIcon name="home" />
+        Главная
       </RouterLink>
 
       <RouterLink
         to="/app/courses"
-        class="rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
-        active-class="bg-[#41b3a3]/15 text-[#41b3a3] font-semibold dark:bg-[#41b3a3]/20 dark:text-[#85dcba]"
+        class="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
+        active-class="bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-semibold dark:bg-[var(--color-primary)]/20 dark:text-[var(--color-mint)]"
+        @click="$emit('close')"
       >
-        📚 Курсы
+        <AppIcon name="graduation-cap" />
+        Курсы
       </RouterLink>
 
       <RouterLink
         to="/app/vocabulary"
-        class="rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
-        active-class="bg-[#41b3a3]/15 text-[#41b3a3] font-semibold dark:bg-[#41b3a3]/20 dark:text-[#85dcba]"
+        class="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
+        active-class="bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-semibold dark:bg-[var(--color-primary)]/20 dark:text-[var(--color-mint)]"
+        @click="$emit('close')"
       >
-        📖 Словарь
+        <AppIcon name="book-open" />
+        Словарь
       </RouterLink>
 
       <RouterLink
         to="/app/texts"
-        class="rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
-        active-class="bg-[#41b3a3]/15 text-[#41b3a3] font-semibold dark:bg-[#41b3a3]/20 dark:text-[#85dcba]"
+        class="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
+        active-class="bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-semibold dark:bg-[var(--color-primary)]/20 dark:text-[var(--color-mint)]"
+        @click="$emit('close')"
       >
-        📄 Тексты
+        <AppIcon name="file-text" />
+        Тексты
       </RouterLink>
 
       <RouterLink
         to="/app/tests"
-        class="rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
-        active-class="bg-[#41b3a3]/15 text-[#41b3a3] font-semibold dark:bg-[#41b3a3]/20 dark:text-[#85dcba]"
+        class="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
+        active-class="bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-semibold dark:bg-[var(--color-primary)]/20 dark:text-[var(--color-mint)]"
+        @click="$emit('close')"
       >
-        🧪 Тесты
+        <AppIcon name="flask" />
+        Тесты
       </RouterLink>
 
       <RouterLink
         to="/app/achievements"
-        class="rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
-        active-class="bg-[#41b3a3]/15 text-[#41b3a3] font-semibold dark:bg-[#41b3a3]/20 dark:text-[#85dcba]"
+        class="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
+        active-class="bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-semibold dark:bg-[var(--color-primary)]/20 dark:text-[var(--color-mint)]"
+        @click="$emit('close')"
       >
-        🏆 Достижения
+        <AppIcon name="trophy" />
+        Достижения
       </RouterLink>
 
       <RouterLink
         to="/app/settings"
-        class="rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
-        active-class="bg-[#41b3a3]/15 text-[#41b3a3] font-semibold dark:bg-[#41b3a3]/20 dark:text-[#85dcba]"
+        class="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
+        active-class="bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-semibold dark:bg-[var(--color-primary)]/20 dark:text-[var(--color-mint)]"
+        @click="$emit('close')"
       >
-        ⚙️ Настройки
+        <AppIcon name="settings" />
+        Настройки
       </RouterLink>
 
     </nav>
@@ -63,4 +93,13 @@
 </template>
 
 <script setup lang="ts">
+import AppIcon from '@/components/base/AppIcon.vue'
+
+defineProps<{
+  open: boolean
+}>()
+
+defineEmits<{
+  (e: 'close'): void
+}>()
 </script>

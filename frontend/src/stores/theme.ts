@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 
 type ThemeMode = 'light' | 'dark'
 
@@ -41,3 +41,7 @@ export const useThemeStore = defineStore('theme', {
     },
   },
 })
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useThemeStore, import.meta.hot))
+}

@@ -87,6 +87,11 @@ func (h *Handler) Me(c *gin.Context) {
 		return
 	}
 
+	if user == nil {
+		response.Unauthorized(c, "user not found")
+		return
+	}
+
 	response.JSON(c, http.StatusOK, RegisterResponse{
 		ID:       user.ID,
 		Username: user.Username,

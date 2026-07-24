@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 
 import { getCourse, getCourses } from '@/services/courses'
 
@@ -41,3 +41,7 @@ export const useCoursesStore = defineStore('courses', {
     },
   },
 })
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useCoursesStore, import.meta.hot))
+}

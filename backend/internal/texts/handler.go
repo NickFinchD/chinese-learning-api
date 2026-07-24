@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/NickFinchD/chinese-learning-api/internal/auth"
 	"github.com/NickFinchD/chinese-learning-api/internal/response"
 	"github.com/gin-gonic/gin"
 )
@@ -33,7 +34,9 @@ func (h *Handler) List(c *gin.Context) {
 		hskLevel = int16(hsk)
 	}
 
-	list, err := h.service.List(c.Request.Context(), hskLevel)
+	userID := auth.GetUserID(c)
+
+	list, err := h.service.List(c.Request.Context(), hskLevel, userID)
 	if err != nil {
 		response.Internal(c)
 		return
@@ -50,11 +53,53 @@ func (h *Handler) GetByID(c *gin.Context) {
 		return
 	}
 
-	text, err := h.service.GetByID(c.Request.Context(), id)
+	userID := auth.GetUserID(c)
+
+	text, err := h.service.GetByID(c.Request.Context(), id, userID)
 	if err != nil {
 		response.NotFound(c, "text not found")
 		return
 	}
 
 	response.JSON(c, http.StatusOK, text)
+}
+
+func (h *Handler) MarkRead(c *gin.Context) {
+
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "invalid text id")
+		return
+	}
+
+	userID := auth.GetUserID(c)
+
+	if err := h.service.MarkRead(c.Request.Context(), userID, id); err != nil {
+		response.Internal(c)
+		return
+	}
+
+	response.JSON(c, http.StatusOK, gin.H{
+		"status": "completed",
+	})
+}
+
+func (h *Handler) MarkUnread(c *gin.Context) {
+
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "invalid text id")
+		return
+	}
+
+	userID := auth.GetUserID(c)
+
+	if err := h.service.MarkUnread(c.Request.Context(), userID, id); err != nil {
+		response.Internal(c)
+		return
+	}
+
+	response.JSON(c, http.StatusOK, gin.H{
+		"status": "in_progress",
+	})
 }

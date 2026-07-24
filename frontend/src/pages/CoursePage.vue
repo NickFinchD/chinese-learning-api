@@ -2,8 +2,9 @@
   <div>
     <div
       v-if="courses.loading"
-      class="text-gray-500 dark:text-gray-400"
+      class="flex items-center gap-2 text-gray-500 dark:text-gray-400"
     >
+      <BaseSpinner />
       Загрузка...
     </div>
 
@@ -39,9 +40,14 @@
 
           <span
             v-if="statusLabel(lesson.id)"
-            class="inline-flex rounded-full px-3 py-1 text-xs font-medium"
+            class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium"
             :class="statusClass(lesson.id)"
           >
+            <AppIcon
+              v-if="isCompleted(lesson.id)"
+              name="check"
+              :size="12"
+            />
             {{ statusLabel(lesson.id) }}
           </span>
         </RouterLink>
@@ -56,6 +62,8 @@ import { RouterLink, useRoute } from 'vue-router'
 
 import { getLessonProgress } from '@/services/progress'
 import { useCoursesStore } from '@/stores/courses'
+import AppIcon from '@/components/base/AppIcon.vue'
+import BaseSpinner from '@/components/base/BaseSpinner.vue'
 
 import type { LessonProgress } from '@/types/progress'
 
@@ -64,11 +72,15 @@ const courses = useCoursesStore()
 
 const progressByLesson = ref<Record<number, LessonProgress>>({})
 
+function isCompleted(lessonId: number) {
+  return progressByLesson.value[lessonId]?.status === 'completed'
+}
+
 function statusLabel(lessonId: number) {
   const status = progressByLesson.value[lessonId]?.status
 
   if (status === 'completed') {
-    return '✓ Пройден'
+    return 'Пройден'
   }
 
   if (status === 'in_progress') {
@@ -85,7 +97,7 @@ function statusClass(lessonId: number) {
     return 'bg-green-100 text-green-700 dark:bg-green-500/15 dark:text-green-400'
   }
 
-  return 'bg-[#41b3a3]/15 text-[#41b3a3] dark:bg-[#41b3a3]/20 dark:text-[#85dcba]'
+  return 'bg-[var(--color-primary)]/15 text-[var(--color-primary)] dark:bg-[var(--color-primary)]/20 dark:text-[var(--color-mint)]'
 }
 
 async function loadProgress() {

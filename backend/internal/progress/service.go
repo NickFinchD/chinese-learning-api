@@ -2,21 +2,32 @@ package progress
 
 import "context"
 
+// LessonCompletionXP is the flat XP reward for completing a lesson for the
+// first time. Retakes (see stores/lessons.ts restart on the frontend) don't
+// grant it again — see CompleteLesson.
+const LessonCompletionXP = 10
+
 type repository interface {
 	StartLesson(ctx context.Context, userID, lessonID int64) error
 	GetProgress(ctx context.Context, userID, lessonID int64) (*UserLessonProgress, error)
 	UpdateStep(ctx context.Context, userID, lessonID int64, currentStep int) error
-	CompleteLesson(ctx context.Context, userID, lessonID int64, score int) error
+	CompleteLesson(ctx context.Context, userID, lessonID int64, score int) (alreadyCompleted bool, err error)
 	UpdateCourseProgress(ctx context.Context, userID, lessonID int64) error
+}
+
+type xpAwarder interface {
+	AwardXP(ctx context.Context, userID int64, amount int) error
 }
 
 type Service struct {
 	repository repository
+	xpAwarder  xpAwarder
 }
 
-func NewService(repository repository) *Service {
+func NewService(repository repository, xpAwarder xpAwarder) *Service {
 	return &Service{
 		repository: repository,
+		xpAwarder:  xpAwarder,
 	}
 }
 
@@ -77,14 +88,16 @@ func (s *Service) UpdateStep(
 		currentStep,
 	)
 }
+// CompleteLesson marks the lesson completed and returns the XP just
+// awarded (0 on a retake — only the first completion pays out).
 func (s *Service) CompleteLesson(
 	ctx context.Context,
 	userID int64,
 	lessonID int64,
 	score int,
-) error {
+) (int, error) {
 
-	err := s.repository.CompleteLesson(
+	alreadyCompleted, err := s.repository.CompleteLesson(
 		ctx,
 		userID,
 		lessonID,
@@ -92,12 +105,20 @@ func (s *Service) CompleteLesson(
 	)
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return s.repository.UpdateCourseProgress(
-		ctx,
-		userID,
-		lessonID,
-	)
+	if err := s.repository.UpdateCourseProgress(ctx, userID, lessonID); err != nil {
+		return 0, err
+	}
+
+	if alreadyCompleted {
+		return 0, nil
+	}
+
+	if err := s.xpAwarder.AwardXP(ctx, userID, LessonCompletionXP); err != nil {
+		return 0, err
+	}
+
+	return LessonCompletionXP, nil
 }

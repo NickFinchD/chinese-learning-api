@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 
 import { getAchievements, getProgress, sendHeartbeat } from '@/services/gamification'
 
@@ -41,3 +41,7 @@ export const useGamificationStore = defineStore('gamification', {
     },
   },
 })
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useGamificationStore, import.meta.hot))
+}

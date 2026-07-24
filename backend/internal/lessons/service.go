@@ -3,20 +3,26 @@ package lessons
 import "context"
 
 type Service struct {
-	repository   *Repository
-	wordProvider WordProvider
-	quizProvider QuizProvider
+	repository       *Repository
+	wordProvider     WordProvider
+	quizProvider     QuizProvider
+	grammarProvider  GrammarProvider
+	sentenceProvider SentenceProvider
 }
 
 func NewService(
 	repository *Repository,
 	wordProvider WordProvider,
 	quizProvider QuizProvider,
+	grammarProvider GrammarProvider,
+	sentenceProvider SentenceProvider,
 ) *Service {
 	return &Service{
-		repository:   repository,
-		wordProvider: wordProvider,
-		quizProvider: quizProvider,
+		repository:       repository,
+		wordProvider:     wordProvider,
+		quizProvider:     quizProvider,
+		grammarProvider:  grammarProvider,
+		sentenceProvider: sentenceProvider,
 	}
 }
 

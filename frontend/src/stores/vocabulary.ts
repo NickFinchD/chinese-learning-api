@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 
 import { getWords } from '@/services/words'
 
@@ -29,3 +29,7 @@ export const useVocabularyStore = defineStore('vocabulary', {
     },
   },
 })
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useVocabularyStore, import.meta.hot))
+}

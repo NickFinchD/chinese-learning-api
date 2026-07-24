@@ -31,7 +31,7 @@ func (s *Service) Register(ctx context.Context, req RegisterRequest) (*User, err
 	existingUser, err := s.repository.GetByEmail(ctx, req.Email)
 
 	if err == nil && existingUser != nil {
-		return nil, errors.New("user with this email already exists")
+		return nil, errors.New("пользователь с таким email уже существует")
 	}
 
 	if err != nil && err != pgx.ErrNoRows {
@@ -66,7 +66,7 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (*LoginResult, er
 	user, err := s.repository.GetByEmail(ctx, req.Email)
 
 	if err != nil {
-		return nil, errors.New("invalid email or password")
+		return nil, errors.New("неверный email или пароль")
 	}
 
 	err = bcrypt.CompareHashAndPassword(
@@ -75,7 +75,7 @@ func (s *Service) Login(ctx context.Context, req LoginRequest) (*LoginResult, er
 	)
 
 	if err != nil {
-		return nil, errors.New("invalid email or password")
+		return nil, errors.New("неверный email или пароль")
 	}
 
 	token, err := utils.GenerateToken(user.ID, s.config.JWT.Secret)

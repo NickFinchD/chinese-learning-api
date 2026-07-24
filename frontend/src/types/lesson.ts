@@ -17,6 +17,24 @@ export interface Quiz {
   options: QuizOption[]
 }
 
+export interface GrammarNote {
+  id: number
+  title: string
+  explanation: string
+  example_hanzi?: string
+  example_pinyin?: string
+  example_translation?: string
+  hsk_level: number
+}
+
+export interface SentenceExercise {
+  id: number
+  translation: string
+  chunks: string[]
+  pinyin: string
+  hsk_level: number
+}
+
 export type LessonStep =
   | {
       id: number
@@ -29,6 +47,18 @@ export type LessonStep =
       step_type: 'quiz'
       sort_order: number
       data: Quiz
+    }
+  | {
+      id: number
+      step_type: 'grammar'
+      sort_order: number
+      data: GrammarNote
+    }
+  | {
+      id: number
+      step_type: 'sentence_builder'
+      sort_order: number
+      data: SentenceExercise
     }
 
 export interface Lesson {

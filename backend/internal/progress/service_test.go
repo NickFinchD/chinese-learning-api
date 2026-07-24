@@ -10,8 +10,9 @@ type fakeRepository struct {
 	getProgressResult *UserLessonProgress
 	getProgressErr    error
 
-	completeLessonErr        error
-	completeLessonCalled     bool
+	completeLessonErr          error
+	completeLessonAlreadyDone  bool
+	completeLessonCalled       bool
 	updateCourseProgressCalled bool
 	updateCourseProgressErr    error
 }
@@ -28,14 +29,26 @@ func (f *fakeRepository) UpdateStep(ctx context.Context, userID, lessonID int64,
 	return nil
 }
 
-func (f *fakeRepository) CompleteLesson(ctx context.Context, userID, lessonID int64, score int) error {
+func (f *fakeRepository) CompleteLesson(ctx context.Context, userID, lessonID int64, score int) (bool, error) {
 	f.completeLessonCalled = true
-	return f.completeLessonErr
+	return f.completeLessonAlreadyDone, f.completeLessonErr
 }
 
 func (f *fakeRepository) UpdateCourseProgress(ctx context.Context, userID, lessonID int64) error {
 	f.updateCourseProgressCalled = true
 	return f.updateCourseProgressErr
+}
+
+type fakeXPAwarder struct {
+	awardedAmount int
+	callCount     int
+	err           error
+}
+
+func (f *fakeXPAwarder) AwardXP(ctx context.Context, userID int64, amount int) error {
+	f.callCount++
+	f.awardedAmount = amount
+	return f.err
 }
 
 func TestGetProgress_MapsRepositoryResult(t *testing.T) {
@@ -48,7 +61,7 @@ func TestGetProgress_MapsRepositoryResult(t *testing.T) {
 		},
 	}
 
-	service := NewService(repo)
+	service := NewService(repo, &fakeXPAwarder{})
 
 	result, err := service.GetProgress(context.Background(), 1, 1)
 
@@ -65,7 +78,7 @@ func TestGetProgress_ReturnsNotStartedWhenNoRowExists(t *testing.T) {
 
 	repo := &fakeRepository{}
 
-	service := NewService(repo)
+	service := NewService(repo, &fakeXPAwarder{})
 
 	result, err := service.GetProgress(context.Background(), 1, 1)
 
@@ -84,7 +97,7 @@ func TestGetProgress_PropagatesError(t *testing.T) {
 		getProgressErr: errors.New("not found"),
 	}
 
-	service := NewService(repo)
+	service := NewService(repo, &fakeXPAwarder{})
 
 	_, err := service.GetProgress(context.Background(), 1, 1)
 
@@ -97,9 +110,9 @@ func TestCompleteLesson_UpdatesCourseProgressAfterSuccess(t *testing.T) {
 
 	repo := &fakeRepository{}
 
-	service := NewService(repo)
+	service := NewService(repo, &fakeXPAwarder{})
 
-	err := service.CompleteLesson(context.Background(), 1, 1, 100)
+	_, err := service.CompleteLesson(context.Background(), 1, 1, 100)
 
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -120,9 +133,9 @@ func TestCompleteLesson_SkipsCourseProgressOnFailure(t *testing.T) {
 		completeLessonErr: errors.New("db error"),
 	}
 
-	service := NewService(repo)
+	service := NewService(repo, &fakeXPAwarder{})
 
-	err := service.CompleteLesson(context.Background(), 1, 1, 100)
+	_, err := service.CompleteLesson(context.Background(), 1, 1, 100)
 
 	if err == nil {
 		t.Fatal("expected an error")
@@ -130,5 +143,49 @@ func TestCompleteLesson_SkipsCourseProgressOnFailure(t *testing.T) {
 
 	if repo.updateCourseProgressCalled {
 		t.Fatal("UpdateCourseProgress should not run when CompleteLesson fails")
+	}
+}
+
+func TestCompleteLesson_AwardsXPOnFirstCompletion(t *testing.T) {
+
+	repo := &fakeRepository{completeLessonAlreadyDone: false}
+	xp := &fakeXPAwarder{}
+
+	service := NewService(repo, xp)
+
+	awarded, err := service.CompleteLesson(context.Background(), 1, 1, 100)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if xp.callCount != 1 || xp.awardedAmount != LessonCompletionXP {
+		t.Fatalf("expected %d XP to be awarded once, got %d call(s) of %d", LessonCompletionXP, xp.callCount, xp.awardedAmount)
+	}
+
+	if awarded != LessonCompletionXP {
+		t.Fatalf("expected CompleteLesson to return %d, got %d", LessonCompletionXP, awarded)
+	}
+}
+
+func TestCompleteLesson_SkipsXPOnRetake(t *testing.T) {
+
+	repo := &fakeRepository{completeLessonAlreadyDone: true}
+	xp := &fakeXPAwarder{}
+
+	service := NewService(repo, xp)
+
+	awarded, err := service.CompleteLesson(context.Background(), 1, 1, 100)
+
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if xp.callCount != 0 {
+		t.Fatalf("expected no XP award on a repeat completion, got %d call(s)", xp.callCount)
+	}
+
+	if awarded != 0 {
+		t.Fatalf("expected CompleteLesson to return 0, got %d", awarded)
 	}
 }

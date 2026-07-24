@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 
 import { checkAnswer, getQuizzesByHSK } from '@/services/quizzes'
 
@@ -69,3 +69,7 @@ export const useGrammarTestStore = defineStore('grammarTest', {
     },
   },
 })
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useGrammarTestStore, import.meta.hot))
+}

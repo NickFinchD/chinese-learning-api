@@ -118,7 +118,7 @@ func (h *Handler) CompleteLesson(c *gin.Context) {
 
 	userID := auth.GetUserID(c)
 
-	err = h.service.CompleteLesson(
+	xpAwarded, err := h.service.CompleteLesson(
 		c.Request.Context(),
 		userID,
 		lessonID,
@@ -131,7 +131,8 @@ func (h *Handler) CompleteLesson(c *gin.Context) {
 	}
 
 	response.JSON(c, http.StatusOK, gin.H{
-		"status": "completed",
-		"score":  request.Score,
+		"status":     "completed",
+		"score":      request.Score,
+		"xp_awarded": xpAwarded,
 	})
 }

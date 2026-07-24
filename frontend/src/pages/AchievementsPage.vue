@@ -15,7 +15,7 @@
 
       <div class="mb-1 h-3 overflow-hidden rounded-full bg-gray-200/50 dark:bg-white/10">
         <div
-          class="h-full bg-[#41b3a3] transition-all duration-300"
+          class="h-full bg-[var(--color-primary)] transition-all duration-300"
           :style="{ width: `${xpPercent}%` }"
         />
       </div>
@@ -27,8 +27,9 @@
 
     <div
       v-if="gamification.loading"
-      class="text-gray-500 dark:text-gray-400"
+      class="flex items-center gap-2 text-gray-500 dark:text-gray-400"
     >
+      <BaseSpinner />
       Загрузка...
     </div>
 
@@ -46,24 +47,46 @@
 
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <div
-            v-for="achievement in group.items"
+            v-for="(achievement, index) in group.items"
             :key="achievement.code"
-            class="rounded-xl border p-6 shadow-sm backdrop-blur-xl"
+            class="animate-fade-in-up rounded-xl border p-6 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-md"
             :class="achievement.unlocked
-              ? 'border-[#e8a87c]/50 bg-[#e8a87c]/10 dark:border-[#e8a87c]/30 dark:bg-[#e8a87c]/10'
+              ? 'border-[var(--color-accent)]/50 bg-[var(--color-accent)]/10 dark:border-[var(--color-accent)]/30 dark:bg-[var(--color-accent)]/10'
               : 'border-white/50 bg-white/20 opacity-60 dark:border-white/10 dark:bg-white/5'"
+            :style="{ animationDelay: `${Math.min(index * 40, 300)}ms` }"
           >
             <div class="mb-2 flex items-center justify-between gap-2">
               <h3 class="font-semibold text-gray-900 dark:text-white">
                 {{ achievement.title }}
               </h3>
 
-              <span class="text-xl">{{ achievement.unlocked ? '🏆' : '🔒' }}</span>
+              <AppIcon
+                :name="achievement.unlocked ? 'trophy' : 'lock'"
+                :size="22"
+                :filled="achievement.unlocked"
+                :class="achievement.unlocked ? 'text-[var(--color-accent)]' : 'text-gray-400 dark:text-gray-500'"
+              />
             </div>
 
             <p class="mb-3 text-sm text-gray-600 dark:text-gray-400">
               {{ achievement.description }}
             </p>
+
+            <div
+              v-if="!achievement.unlocked"
+              class="mb-3"
+            >
+              <div class="mb-1 h-1.5 overflow-hidden rounded-full bg-gray-200/50 dark:bg-white/10">
+                <div
+                  class="h-full bg-[var(--color-primary)] transition-all duration-300"
+                  :style="{ width: `${progressPercent(achievement)}%` }"
+                />
+              </div>
+
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                {{ Math.min(achievement.current_value, achievement.threshold) }} / {{ achievement.threshold }}
+              </div>
+            </div>
 
             <div class="text-xs text-gray-500 dark:text-gray-400">
               <span v-if="achievement.unlocked">
@@ -84,6 +107,8 @@
 import { computed, onMounted } from 'vue'
 
 import { useGamificationStore } from '@/stores/gamification'
+import AppIcon from '@/components/base/AppIcon.vue'
+import BaseSpinner from '@/components/base/BaseSpinner.vue'
 
 import type { Achievement } from '@/types/gamification'
 
@@ -118,6 +143,14 @@ const groupedAchievements = computed(() => {
     items: items.sort((a, b) => a.tier - b.tier),
   }))
 })
+
+function progressPercent(achievement: Achievement) {
+  if (achievement.threshold <= 0) {
+    return 0
+  }
+
+  return Math.min(100, (achievement.current_value / achievement.threshold) * 100)
+}
 
 function formatDate(iso?: string) {
   if (!iso) {

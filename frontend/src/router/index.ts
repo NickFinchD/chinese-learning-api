@@ -4,6 +4,7 @@ import AuthLayout from '@/layouts/AuthLayout.vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 
 import LoginPage from '@/pages/LoginPage.vue'
+import RegisterPage from '@/pages/RegisterPage.vue'
 import HomePage from '@/pages/HomePage.vue'
 
 import { useAuthStore } from '@/stores/auth'
@@ -15,6 +16,7 @@ import SettingsPage from '@/pages/SettingsPage.vue'
 import TestsPage from '@/pages/TestsPage.vue'
 import GrammarTestPage from '@/pages/GrammarTestPage.vue'
 import WordTrainingPage from '@/pages/WordTrainingPage.vue'
+import SentenceTestPage from '@/pages/SentenceTestPage.vue'
 
 import TextsPage from '@/pages/TextsPage.vue'
 import TextPage from '@/pages/TextPage.vue'
@@ -31,12 +33,21 @@ const router = createRouter({
     {
       path: '/',
       component: AuthLayout,
+      redirect: '/app',
 
       children: [
         {
           path: 'login',
           name: 'login',
           component: LoginPage,
+          meta: {
+            guest: true,
+          },
+        },
+        {
+          path: 'register',
+          name: 'register',
+          component: RegisterPage,
           meta: {
             guest: true,
           },
@@ -97,6 +108,11 @@ const router = createRouter({
     path: 'tests/words',
     name: 'word-training',
     component: WordTrainingPage,
+  },
+  {
+    path: 'tests/sentences',
+    name: 'sentence-test',
+    component: SentenceTestPage,
   },
   {
   path: 'lessons/:id',

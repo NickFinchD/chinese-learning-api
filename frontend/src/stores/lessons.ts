@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 
 import { getLesson } from '@/services/lessons'
 import { completeLesson, getLessonProgress, startLesson, updateLessonStep } from '@/services/progress'
@@ -48,6 +48,18 @@ export const useLessonsStore = defineStore('lessons', {
       return Math.max(0, progressResponse.data.current_step - 1)
     },
 
+    // Resets progress on the backend and restarts the lesson from step 1,
+    // even if it was previously completed (startLesson upserts the row).
+    async restart(lessonId: number) {
+      await startLesson(lessonId)
+
+      this.progress = {
+        status: 'in_progress',
+        current_step: 1,
+        score: 0,
+      }
+    },
+
     async saveStep(lessonId: number, stepIndex: number) {
       const currentStep = stepIndex + 1
 
@@ -58,7 +70,9 @@ export const useLessonsStore = defineStore('lessons', {
       }
     },
 
-    async finishLesson(lessonId: number, score: number) {
+    // Returns the XP just awarded (0 on a retake — only the first
+    // completion of a given lesson pays out).
+    async finishLesson(lessonId: number, score: number): Promise<number> {
       const response = await completeLesson(lessonId, score)
 
       this.progress = {
@@ -66,6 +80,12 @@ export const useLessonsStore = defineStore('lessons', {
         current_step: this.progress?.current_step ?? 0,
         score: response.data.score,
       }
+
+      return response.data.xp_awarded
     },
   },
 })
+
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useLessonsStore, import.meta.hot))
+}

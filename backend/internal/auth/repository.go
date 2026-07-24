@@ -2,7 +2,9 @@ package auth
 
 import (
 	"context"
+	"errors"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -66,6 +68,9 @@ func (r *Repository) GetByEmail(ctx context.Context, email string) (*User, error
 
 	return user, nil
 }
+// GetByID returns (nil, nil) — not an error — when no such user exists, so
+// callers (e.g. /me for a JWT whose user was since deleted) can tell "no
+// longer a valid session" apart from a real database failure.
 func (r *Repository) GetByID(ctx context.Context, id int64) (*User, error) {
 	query := `
 		SELECT
@@ -93,6 +98,9 @@ func (r *Repository) GetByID(ctx context.Context, id int64) (*User, error) {
 	)
 
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
