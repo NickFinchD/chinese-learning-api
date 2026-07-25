@@ -107,13 +107,13 @@
       <div class="flex items-center gap-2">
         <button
           type="button"
-          class="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/30 px-4 py-2 text-gray-700 backdrop-blur-md transition hover:bg-white/50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
+          class="inline-flex items-center gap-1.5 rounded-full border border-white/50 bg-white/30 px-3 py-1.5 text-sm text-gray-700 backdrop-blur-md transition hover:bg-white/50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
           :disabled="restarting"
           @click="retakeLesson"
         >
           <AppIcon
             name="refresh"
-            :size="16"
+            :size="14"
           />
           Начать заново
         </button>
