@@ -10,7 +10,7 @@
     >
       <div class="mb-2 flex items-center justify-between">
         <span class="text-lg font-semibold text-gray-900 dark:text-white">Уровень {{ gamification.progress.level }}</span>
-        <span class="text-sm text-gray-500 dark:text-gray-400">{{ gamification.progress.hours_active }} ч. в приложении</span>
+        <span class="text-sm text-gray-500 dark:text-gray-400">{{ hoursActive }} ч. в приложении</span>
       </div>
 
       <div class="mb-1 h-3 overflow-hidden rounded-full bg-gray-200/50 dark:bg-white/10">
@@ -119,6 +119,14 @@ const metricLabels: Record<string, string> = {
   words_learned: 'Эрудит',
   lessons_completed: 'Отличник',
 }
+
+const hoursActive = computed(() => {
+  if (!gamification.progress) {
+    return '0.0'
+  }
+
+  return (gamification.progress.total_seconds_active / 3600).toFixed(1)
+})
 
 const xpPercent = computed(() => {
   if (!gamification.progress || gamification.progress.xp_for_next_level === 0) {
