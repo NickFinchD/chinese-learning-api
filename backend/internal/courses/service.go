@@ -12,8 +12,8 @@ func NewService(repository *Repository) *Service {
 	}
 }
 
-func (s *Service) List(ctx context.Context) ([]Course, error) {
-	return s.repository.List(ctx)
+func (s *Service) List(ctx context.Context, userID int64) ([]Course, error) {
+	return s.repository.List(ctx, userID)
 }
 
 func (s *Service) GetByID(ctx context.Context, id int64) (*CourseDetailsResponse, error) {

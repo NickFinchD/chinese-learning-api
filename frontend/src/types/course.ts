@@ -6,6 +6,7 @@ export interface Course {
   sort_order: number
   created_at: string
   updated_at: string
+  progress_percent: number
 }
 
 export interface Lesson {

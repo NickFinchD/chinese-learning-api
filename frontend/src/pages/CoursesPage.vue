@@ -34,6 +34,19 @@
         >
           HSK {{ course.hsk_level }}
         </span>
+
+        <div class="mt-4">
+          <div class="mb-1 h-2 overflow-hidden rounded-full bg-gray-200/50 dark:bg-white/10">
+            <div
+              class="h-full bg-[var(--color-primary)] transition-all duration-300"
+              :style="{ width: `${course.progress_percent}%` }"
+            />
+          </div>
+
+          <div class="text-xs text-gray-500 dark:text-gray-400">
+            Пройдено {{ course.progress_percent }}%
+          </div>
+        </div>
       </RouterLink>
     </div>
   </div>

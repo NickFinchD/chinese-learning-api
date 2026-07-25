@@ -10,4 +10,7 @@ type Course struct {
 	SortOrder   int       `db:"sort_order" json:"sort_order"`
 	CreatedAt   time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt   time.Time `db:"updated_at" json:"updated_at"`
+	// ProgressPercent is only populated by List (it's user-scoped); 0 on a
+	// course the user hasn't started.
+	ProgressPercent int `db:"progress_percent" json:"progress_percent"`
 }

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/NickFinchD/chinese-learning-api/internal/auth"
 	"github.com/NickFinchD/chinese-learning-api/internal/response"
 	"github.com/gin-gonic/gin"
 )
@@ -20,7 +21,9 @@ func NewHandler(service *Service) *Handler {
 
 func (h *Handler) List(c *gin.Context) {
 
-	courses, err := h.service.List(c.Request.Context())
+	userID := auth.GetUserID(c)
+
+	courses, err := h.service.List(c.Request.Context(), userID)
 
 	if err != nil {
 		response.Internal(c)

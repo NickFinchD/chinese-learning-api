@@ -16,22 +16,25 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	}
 }
 
-func (r *Repository) List(ctx context.Context) ([]Course, error) {
+func (r *Repository) List(ctx context.Context, userID int64) ([]Course, error) {
 
 	query := `
 		SELECT
-			id,
-			title,
-			description,
-			hsk_level,
-			sort_order,
-			created_at,
-			updated_at
-		FROM courses
-		ORDER BY sort_order, id
+			c.id,
+			c.title,
+			c.description,
+			c.hsk_level,
+			c.sort_order,
+			c.created_at,
+			c.updated_at,
+			COALESCE(ucp.progress_percent, 0)
+		FROM courses c
+		LEFT JOIN user_course_progress ucp
+			ON ucp.course_id = c.id AND ucp.user_id = $1
+		ORDER BY c.sort_order, c.id
 	`
 
-	rows, err := r.db.Query(ctx, query)
+	rows, err := r.db.Query(ctx, query, userID)
 
 	if err != nil {
 		return nil, err
@@ -53,6 +56,7 @@ func (r *Repository) List(ctx context.Context) ([]Course, error) {
 			&course.SortOrder,
 			&course.CreatedAt,
 			&course.UpdatedAt,
+			&course.ProgressPercent,
 		)
 
 		if err != nil {
