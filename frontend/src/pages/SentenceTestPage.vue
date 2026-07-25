@@ -92,7 +92,11 @@
           {{ test.currentExercise.translation }}
         </h2>
 
-        <div class="mb-4 flex min-h-16 flex-wrap gap-2 rounded-xl border border-dashed border-white/50 bg-white/10 p-3 dark:border-white/10">
+        <TransitionGroup
+          tag="div"
+          name="chunk"
+          class="relative mb-4 flex min-h-16 flex-wrap gap-2 rounded-xl border border-dashed border-white/50 bg-white/10 p-3 dark:border-white/10"
+        >
           <button
             v-for="chunk in selected"
             :key="chunk.key"
@@ -106,13 +110,18 @@
 
           <span
             v-if="selected.length === 0"
+            key="placeholder"
             class="self-center text-sm text-gray-400 dark:text-gray-500"
           >
             Нажимайте на иероглифы ниже, чтобы собрать предложение
           </span>
-        </div>
+        </TransitionGroup>
 
-        <div class="flex flex-wrap gap-2">
+        <TransitionGroup
+          tag="div"
+          name="chunk"
+          class="relative flex flex-wrap gap-2"
+        >
           <button
             v-for="chunk in pool"
             :key="chunk.key"
@@ -123,7 +132,7 @@
           >
             {{ chunk.text }}
           </button>
-        </div>
+        </TransitionGroup>
 
         <div
           v-if="test.answeredResult !== null"

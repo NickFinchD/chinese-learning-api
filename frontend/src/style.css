@@ -71,12 +71,33 @@
   animation: blob-drift 20s ease-in-out infinite;
 }
 
+/* Sentence-builder chunk chips (lesson step + standalone test) moving
+ * between the pool and the selected-order tray. */
+.chunk-move {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.chunk-enter-active {
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.chunk-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  position: absolute;
+}
+.chunk-enter-from,
+.chunk-leave-to {
+  opacity: 0;
+  transform: scale(0.85);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-blob,
   .animate-fade-in-up,
   .animate-pop-in,
   .page-enter-active,
-  .page-leave-active {
+  .page-leave-active,
+  .chunk-move,
+  .chunk-enter-active,
+  .chunk-leave-active {
     animation: none !important;
     transition: none !important;
   }
