@@ -20,7 +20,17 @@
           :disabled="result !== null"
         >
 
-        {{ option.text }}
+        <template v-if="quiz.direction === 'translation_to_word'">
+          <span class="font-hanzi text-lg">{{ option.text }}</span>
+          <span
+            v-if="option.pinyin"
+            class="ml-2 text-sm text-gray-500 dark:text-gray-400"
+          >{{ option.pinyin }}</span>
+        </template>
+
+        <template v-else>
+          {{ option.text }}
+        </template>
       </label>
     </div>
 
@@ -45,10 +55,15 @@
       </span>
 
       <span
-        v-if="quiz.pinyin"
-        class="mt-1 block text-base font-normal text-gray-500 dark:text-gray-400"
+        v-if="quiz.pinyin || quiz.hanzi"
+        class="mt-1 flex items-center gap-2 text-base font-normal text-gray-500 dark:text-gray-400"
       >
-        {{ quiz.pinyin }}
+        <span v-if="quiz.pinyin">{{ quiz.pinyin }}</span>
+        <AudioButton
+          v-if="quiz.hanzi"
+          :text="quiz.hanzi"
+          size="sm"
+        />
       </span>
     </div>
 
@@ -77,6 +92,7 @@ import { ref } from 'vue'
 import type { Quiz } from '@/types/lesson'
 import { checkAnswer } from '@/services/quizzes'
 import AppIcon from '@/components/base/AppIcon.vue'
+import AudioButton from '@/components/base/AudioButton.vue'
 
 const props = defineProps<{
   quiz: Quiz

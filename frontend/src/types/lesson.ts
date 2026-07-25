@@ -9,12 +9,17 @@ export interface QuizOption {
   id: number
   text: string
   sort_order: number
+  pinyin?: string
 }
+
+export type QuizDirection = 'word_to_translation' | 'translation_to_word'
 
 export interface Quiz {
   id: number
   question: string
   options: QuizOption[]
+  direction: QuizDirection
+  hanzi?: string
   pinyin?: string
 }
 

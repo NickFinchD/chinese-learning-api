@@ -37,6 +37,8 @@ func (r *Repository) GetByIDs(ctx context.Context, ids []int64) ([]Quiz, error) 
 			id,
 			question,
 			hsk_level,
+			direction,
+			hanzi,
 			pinyin,
 			created_at,
 			updated_at
@@ -61,6 +63,8 @@ func (r *Repository) GetByIDs(ctx context.Context, ids []int64) ([]Quiz, error) 
 			&quiz.ID,
 			&quiz.Question,
 			&quiz.HSKLevel,
+			&quiz.Direction,
+			&quiz.Hanzi,
 			&quiz.Pinyin,
 			&quiz.CreatedAt,
 			&quiz.UpdatedAt,
@@ -102,6 +106,7 @@ func (r *Repository) loadOptions(ctx context.Context, quizzes []Quiz) error {
 			id,
 			quiz_id,
 			option_text,
+			pinyin,
 			is_correct,
 			sort_order
 		FROM quiz_options
@@ -126,6 +131,7 @@ func (r *Repository) loadOptions(ctx context.Context, quizzes []Quiz) error {
 			&option.ID,
 			&option.QuizID,
 			&option.Text,
+			&option.Pinyin,
 			&option.IsCorrect,
 			&option.SortOrder,
 		)
@@ -149,7 +155,7 @@ func (r *Repository) loadOptions(ctx context.Context, quizzes []Quiz) error {
 }
 func (r *Repository) GetAll(ctx context.Context) ([]Quiz, error) {
 	rows, err := r.db.Query(ctx, `
-		SELECT id, question, hsk_level, pinyin, created_at, updated_at
+		SELECT id, question, hsk_level, direction, hanzi, pinyin, created_at, updated_at
 		FROM quizzes
 		ORDER BY id
 	`)
@@ -167,6 +173,8 @@ func (r *Repository) GetAll(ctx context.Context) ([]Quiz, error) {
 			&quiz.ID,
 			&quiz.Question,
 			&quiz.HSKLevel,
+			&quiz.Direction,
+			&quiz.Hanzi,
 			&quiz.Pinyin,
 			&quiz.CreatedAt,
 			&quiz.UpdatedAt,
@@ -189,7 +197,7 @@ func (r *Repository) GetAll(ctx context.Context) ([]Quiz, error) {
 }
 func (r *Repository) GetByHSKLevel(ctx context.Context, hsk int16) ([]Quiz, error) {
 	rows, err := r.db.Query(ctx, `
-		SELECT id, question, hsk_level, pinyin, created_at, updated_at
+		SELECT id, question, hsk_level, direction, hanzi, pinyin, created_at, updated_at
 		FROM quizzes
 		WHERE hsk_level = $1
 		ORDER BY id
@@ -208,6 +216,8 @@ func (r *Repository) GetByHSKLevel(ctx context.Context, hsk int16) ([]Quiz, erro
 			&quiz.ID,
 			&quiz.Question,
 			&quiz.HSKLevel,
+			&quiz.Direction,
+			&quiz.Hanzi,
 			&quiz.Pinyin,
 			&quiz.CreatedAt,
 			&quiz.UpdatedAt,
@@ -232,13 +242,15 @@ func (r *Repository) GetByID(ctx context.Context, id int64) (*Quiz, error) {
 	var quiz Quiz
 
 	err := r.db.QueryRow(ctx, `
-		SELECT id, question, hsk_level, pinyin, created_at, updated_at
+		SELECT id, question, hsk_level, direction, hanzi, pinyin, created_at, updated_at
 		FROM quizzes
 		WHERE id = $1
 	`, id).Scan(
 		&quiz.ID,
 		&quiz.Question,
 		&quiz.HSKLevel,
+		&quiz.Direction,
+		&quiz.Hanzi,
 		&quiz.Pinyin,
 		&quiz.CreatedAt,
 		&quiz.UpdatedAt,
@@ -266,10 +278,11 @@ func (r *Repository) Create(ctx context.Context, quiz Quiz) (*Quiz, error) {
 	err = tx.QueryRow(ctx, `
 		INSERT INTO quizzes (question)
 		VALUES ($1)
-		RETURNING id, hsk_level, created_at, updated_at
+		RETURNING id, hsk_level, direction, created_at, updated_at
 	`, quiz.Question).Scan(
 		&quiz.ID,
 		&quiz.HSKLevel,
+		&quiz.Direction,
 		&quiz.CreatedAt,
 		&quiz.UpdatedAt,
 	)
