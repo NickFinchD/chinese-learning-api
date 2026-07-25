@@ -20,7 +20,7 @@
           >
             <component
               :is="Component"
-              :key="route.fullPath"
+              :key="route.path"
             />
           </Transition>
         </RouterView>
