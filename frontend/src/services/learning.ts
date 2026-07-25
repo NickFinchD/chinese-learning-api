@@ -30,3 +30,9 @@ export async function recordWordAnswer(wordId: number, correct: boolean) {
 
   return response.data
 }
+
+export async function markWordLearned(wordId: number) {
+  const response = await api.post<ApiResponse<WordProgress>>(`/learning/${wordId}/learned`)
+
+  return response.data
+}

@@ -390,6 +390,30 @@
           <div class="text-gray-700 dark:text-gray-300">
             {{ word.translation }}
           </div>
+
+          <button
+            v-if="tab === 'saved' && !isLearned(word.id)"
+            type="button"
+            class="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-white/50 bg-white/20 px-3 py-1.5 text-sm text-gray-600 backdrop-blur-md transition hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
+            @click="onMarkLearned(word)"
+          >
+            <AppIcon
+              name="check"
+              :size="14"
+            />
+            Отметить как изученное
+          </button>
+
+          <div
+            v-else-if="tab === 'saved'"
+            class="mt-3 flex items-center justify-center gap-1.5 text-sm text-green-600 dark:text-green-400"
+          >
+            <AppIcon
+              name="check-circle"
+              :size="14"
+            />
+            Изучено
+          </div>
         </div>
       </div>
     </template>
@@ -592,6 +616,14 @@ function isSaved(wordId: number) {
   return savedWords.items.some(word => word.id === wordId)
 }
 
+function isLearned(wordId: number) {
+  return learning.learnedWords.some(word => word.id === wordId)
+}
+
+async function onMarkLearned(word: Word) {
+  await learning.markLearned(word)
+}
+
 async function toggleSaved(word: Word) {
   if (isSaved(word.id)) {
     await savedWords.removeWord(word.id)
@@ -640,6 +672,7 @@ onMounted(() => {
   }
 
   savedWords.loadSavedWords()
+  learning.loadLearned()
 
   clockInterval = setInterval(() => {
     now.value = Date.now()

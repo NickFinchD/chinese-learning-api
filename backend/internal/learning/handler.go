@@ -47,6 +47,27 @@ func (h *Handler) Answer(c *gin.Context) {
 	response.JSON(c, http.StatusOK, toProgressResponse(progress))
 }
 
+func (h *Handler) MarkLearned(c *gin.Context) {
+
+	wordID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+
+	if err != nil {
+		response.BadRequest(c, "invalid word id")
+		return
+	}
+
+	userID := auth.GetUserID(c)
+
+	progress, err := h.service.MarkLearned(c.Request.Context(), userID, wordID)
+
+	if err != nil {
+		response.Internal(c)
+		return
+	}
+
+	response.JSON(c, http.StatusOK, toProgressResponse(progress))
+}
+
 func (h *Handler) List(c *gin.Context) {
 
 	userID := auth.GetUserID(c)

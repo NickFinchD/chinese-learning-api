@@ -1,6 +1,6 @@
 import { acceptHMRUpdate, defineStore } from 'pinia'
 
-import { getInProgressWords, getLearnedWords } from '@/services/learning'
+import { getInProgressWords, getLearnedWords, markWordLearned } from '@/services/learning'
 
 import type { InProgressWord } from '@/types/learning'
 import type { Word } from '@/types/word'
@@ -36,6 +36,16 @@ export const useLearningStore = defineStore('learning', {
         this.inProgressWords = response.data ?? []
       } finally {
         this.loadingInProgress = false
+      }
+    },
+
+    async markLearned(word: Word) {
+      await markWordLearned(word.id)
+
+      this.inProgressWords = this.inProgressWords.filter(w => w.word_id !== word.id)
+
+      if (!this.learnedWords.some(w => w.id === word.id)) {
+        this.learnedWords = [word, ...this.learnedWords]
       }
     },
   },

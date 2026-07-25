@@ -7,4 +7,5 @@ func RegisterRoutes(router *gin.RouterGroup, handler *Handler) {
 	router.GET("/learned", handler.ListLearned)
 	router.GET("/in-progress", handler.ListInProgress)
 	router.POST("/:id/answer", handler.Answer)
+	router.POST("/:id/learned", handler.MarkLearned)
 }

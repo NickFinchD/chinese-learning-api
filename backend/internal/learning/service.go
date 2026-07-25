@@ -83,6 +83,40 @@ func (s *Service) RecordAnswer(ctx context.Context, userID, wordID int64, correc
 	return progress, nil
 }
 
+// MarkLearned immediately graduates a word to "learned", skipping the rest
+// of the spaced-repetition schedule — used to let the learner mark a saved
+// word they already know without grinding through the review stages.
+func (s *Service) MarkLearned(ctx context.Context, userID, wordID int64) (*WordLearningProgress, error) {
+
+	progress, err := s.repository.Get(ctx, userID, wordID)
+	if err != nil {
+		return nil, err
+	}
+
+	if progress == nil {
+		progress = &WordLearningProgress{
+			UserID: userID,
+			WordID: wordID,
+		}
+	}
+
+	if progress.LearnedAt != nil {
+		return progress, nil
+	}
+
+	learnedAt := s.now()
+
+	progress.Stage = MaxStage
+	progress.NextEligibleAt = nil
+	progress.LearnedAt = &learnedAt
+
+	if err := s.repository.Upsert(ctx, progress); err != nil {
+		return nil, err
+	}
+
+	return progress, nil
+}
+
 func (s *Service) ListForUser(ctx context.Context, userID int64) ([]WordLearningProgress, error) {
 	return s.repository.ListForUser(ctx, userID)
 }
