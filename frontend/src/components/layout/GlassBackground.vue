@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed inset-0 -z-10 overflow-hidden bg-gray-50 transition-colors duration-300 dark:bg-slate-950">
+  <div class="fixed inset-0 -z-10 overflow-hidden bg-gray-200 transition-colors duration-300 dark:bg-slate-950">
     <div class="animate-blob absolute -left-40 -top-40 h-[28rem] w-[28rem] rounded-full bg-[var(--color-primary)] opacity-40 blur-3xl dark:opacity-30" />
     <div
       class="animate-blob absolute -right-32 top-1/4 h-[26rem] w-[26rem] rounded-full bg-[var(--color-secondary)] opacity-30 blur-3xl dark:opacity-25"
