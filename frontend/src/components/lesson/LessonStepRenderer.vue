@@ -10,7 +10,6 @@
     :key="stepKey"
     :quiz="step.data"
     :is-last-step="isLastStep"
-    :pinyin-by-hanzi="pinyinByHanzi"
     @answered="$emit('answered', $event)"
     @next="$emit('next')"
   />
@@ -52,7 +51,6 @@ const props = defineProps<{
   step: LessonStep
   attempt: number
   isLastStep: boolean
-  pinyinByHanzi: Record<string, string>
 }>()
 
 defineEmits<{

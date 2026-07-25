@@ -15,6 +15,7 @@ export interface Quiz {
   id: number
   question: string
   options: QuizOption[]
+  pinyin?: string
 }
 
 export interface GrammarNote {

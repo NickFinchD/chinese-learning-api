@@ -3,9 +3,12 @@ package quizzes
 import "time"
 
 type Quiz struct {
-	ID        int64     `db:"id" json:"id"`
-	Question  string    `db:"question" json:"question"`
-	HSKLevel  int16     `db:"hsk_level" json:"hsk_level"`
+	ID       int64  `db:"id" json:"id"`
+	Question string `db:"question" json:"question"`
+	HSKLevel int16  `db:"hsk_level" json:"hsk_level"`
+	// Pinyin of the word being tested, when the quiz was generated from one
+	// (the "Как переводится X?" vocab format). Nil for hand-written quizzes.
+	Pinyin    *string   `db:"pinyin" json:"pinyin,omitempty"`
 	Options   []Option  `json:"options"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`

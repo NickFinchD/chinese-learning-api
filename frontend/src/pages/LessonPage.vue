@@ -121,7 +121,6 @@
         :step="currentStep"
         :attempt="retryAttempts[currentStep.id] ?? 0"
         :is-last-step="isLastStep"
-        :pinyin-by-hanzi="pinyinByHanzi"
         @answered="onAnswered"
         @next="nextStep"
       />
@@ -188,20 +187,6 @@ const nextLesson = computed(() => {
   }
 
   return courses.current.lessons.find(l => l.lesson_number === lessons.current!.lesson_number + 1) ?? null
-})
-
-// Lets quiz steps show the pinyin for the word they're testing, since the
-// same word always also appears as a 'word' step somewhere in the lesson.
-const pinyinByHanzi = computed(() => {
-  const map: Record<string, string> = {}
-
-  for (const step of stepsQueue.value) {
-    if (step.step_type === 'word') {
-      map[step.data.hanzi] = step.data.pinyin
-    }
-  }
-
-  return map
 })
 
 function onAnswered(correct: boolean) {

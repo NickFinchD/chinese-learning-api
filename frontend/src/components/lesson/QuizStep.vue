@@ -45,10 +45,10 @@
       </span>
 
       <span
-        v-if="pinyin"
+        v-if="quiz.pinyin"
         class="mt-1 block text-base font-normal text-gray-500 dark:text-gray-400"
       >
-        {{ pinyin }}
+        {{ quiz.pinyin }}
       </span>
     </div>
 
@@ -72,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 
 import type { Quiz } from '@/types/lesson'
 import { checkAnswer } from '@/services/quizzes'
@@ -81,7 +81,6 @@ import AppIcon from '@/components/base/AppIcon.vue'
 const props = defineProps<{
   quiz: Quiz
   isLastStep: boolean
-  pinyinByHanzi: Record<string, string>
 }>()
 
 const emit = defineEmits<{
@@ -91,14 +90,6 @@ const emit = defineEmits<{
 
 const selected = ref<number | null>(null)
 const result = ref<boolean | null>(null)
-
-// Auto-generated vocab quizzes always follow this exact question format —
-// pull the hanzi back out so the pinyin can be shown alongside the result.
-const pinyin = computed(() => {
-  const match = props.quiz.question.match(/Как переводится (.+)\?/)
-
-  return match ? props.pinyinByHanzi[match[1]] : undefined
-})
 
 async function check() {
   if (selected.value === null || result.value !== null) {
