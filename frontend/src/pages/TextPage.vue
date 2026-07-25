@@ -78,6 +78,13 @@
           >
             <span>{{ (activeSegment.word ?? activeSegment.name)!.pinyin }} — {{ (activeSegment.word ?? activeSegment.name)!.translation }}</span>
 
+            <span
+              v-if="activeSegment.word"
+              class="rounded-full bg-white/10 px-2 py-0.5 text-xs font-medium text-[var(--color-mint)]"
+            >
+              HSK {{ activeSegment.word.hsk_level }}
+            </span>
+
             <AudioButton
               :text="activeSegment.text"
               size="sm"
