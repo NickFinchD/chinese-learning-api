@@ -95,7 +95,7 @@
       />
     </div>
 
-    <div class="mb-6 flex justify-between">
+    <div class="mb-6 flex items-center justify-between gap-2">
       <button
         class="rounded-full border border-white/50 bg-white/30 px-4 py-2 text-gray-700 backdrop-blur-md transition hover:bg-white/50 disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
         :disabled="currentStepIndex === 0"
@@ -104,13 +104,28 @@
         Назад
       </button>
 
-      <button
-        v-if="currentStep?.step_type !== 'quiz' && currentStep?.step_type !== 'sentence_builder'"
-        class="rounded-full bg-[var(--color-primary)] px-4 py-2 text-white shadow-lg shadow-[var(--color-primary)]/30 transition hover:bg-[var(--color-primary)]/90"
-        @click="nextStep"
-      >
-        {{ isLastStep ? 'Завершить урок' : 'Далее' }}
-      </button>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/30 px-4 py-2 text-gray-700 backdrop-blur-md transition hover:bg-white/50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
+          :disabled="restarting"
+          @click="retakeLesson"
+        >
+          <AppIcon
+            name="refresh"
+            :size="16"
+          />
+          Начать заново
+        </button>
+
+        <button
+          v-if="currentStep?.step_type !== 'quiz' && currentStep?.step_type !== 'sentence_builder'"
+          class="rounded-full bg-[var(--color-primary)] px-4 py-2 text-white shadow-lg shadow-[var(--color-primary)]/30 transition hover:bg-[var(--color-primary)]/90"
+          @click="nextStep"
+        >
+          {{ isLastStep ? 'Завершить урок' : 'Далее' }}
+        </button>
+      </div>
     </div>
 
     <div
