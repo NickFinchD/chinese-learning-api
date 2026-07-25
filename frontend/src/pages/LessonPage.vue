@@ -114,7 +114,7 @@
           name="refresh"
           :size="16"
         />
-        Начать заново
+        Заново
       </button>
 
       <button
