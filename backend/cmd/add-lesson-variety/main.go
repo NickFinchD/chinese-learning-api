@@ -6,12 +6,15 @@
 //     existing "Как переводится X?" (word_to_translation) quiz, testing the
 //     same word in reverse — mirroring how each word already gets a 'word'
 //     step plus a forward quiz.
-//   - One sentence_builder step, for lessons that don't already have one,
-//     inserted right after the lesson's vocabulary/grammar block (or at the
-//     start, for review-only lessons with no 'word'/'grammar' steps).
-//     Reused from the shared sentence_exercises pool for the course's HSK
-//     level — the pool is far smaller than the lesson count, so exercises
-//     necessarily repeat across lessons.
+//   - One sentence_builder step, for lessons numbered 3+ within their course
+//     that don't already have one (lessons 1-2 are skipped — too little
+//     vocabulary has been introduced yet for the shared exercise pool to
+//     reliably stay within it), inserted right after the lesson's
+//     vocabulary/grammar block (or at the start, for review-only lessons
+//     with no 'word'/'grammar' steps). Reused from the shared
+//     sentence_exercises pool for the course's HSK level — the pool is far
+//     smaller than the lesson count, so exercises necessarily repeat across
+//     lessons.
 //
 //	go run ./cmd/add-lesson-variety
 //
@@ -100,9 +103,9 @@ func main() {
 		}
 	}
 
-	lessonHSK, err := loadLessonHSKLevels(ctx, db)
+	lessonMetaByID, err := loadLessonMeta(ctx, db)
 	if err != nil {
-		log.Fatalf("failed to load lesson HSK levels: %v", err)
+		log.Fatalf("failed to load lesson metadata: %v", err)
 	}
 
 	sentencePool, err := loadSentencePoolByHSK(ctx, db)
@@ -158,15 +161,21 @@ func main() {
 
 		sentenceInsertAt := lastVocabIdx + 1 // 0 if no word/grammar steps
 
-		hskLevel := lessonHSK[lessonID]
+		meta := lessonMetaByID[lessonID]
+		hskLevel := meta.HSKLevel
 		pool := sentencePool[hskLevel]
+		// Lessons 1-2 of a course only introduce a handful of words, too few
+		// for sentence_exercises (drawn from a level-wide pool, not tied to
+		// any specific lesson's vocabulary) to reliably use only words the
+		// learner has already seen. Skip those early lessons.
+		eligibleForSentence := meta.LessonNumber >= 3
 
 		planned := make([]newStep, 0, len(original)+len(original)/2+1)
 		changed := false
 
 		for i, s := range original {
 
-			if !hasSentenceBuilder && i == sentenceInsertAt && len(pool) > 0 {
+			if eligibleForSentence && !hasSentenceBuilder && i == sentenceInsertAt && len(pool) > 0 {
 				cursor := sentenceCursor[hskLevel]
 				exerciseID := pool[cursor%len(pool)]
 				sentenceCursor[hskLevel] = cursor + 1
@@ -214,7 +223,7 @@ func main() {
 			changed = true
 		}
 
-		if !hasSentenceBuilder && sentenceInsertAt == len(original) && len(pool) > 0 {
+		if eligibleForSentence && !hasSentenceBuilder && sentenceInsertAt == len(original) && len(pool) > 0 {
 			cursor := sentenceCursor[hskLevel]
 			exerciseID := pool[cursor%len(pool)]
 			sentenceCursor[hskLevel] = cursor + 1
@@ -277,9 +286,14 @@ func loadQuizzes(ctx context.Context, db *pgxpool.Pool) ([]quizInfo, error) {
 	return quizzes, rows.Err()
 }
 
-func loadLessonHSKLevels(ctx context.Context, db *pgxpool.Pool) (map[int64]int16, error) {
+type lessonMeta struct {
+	HSKLevel     int16
+	LessonNumber int
+}
+
+func loadLessonMeta(ctx context.Context, db *pgxpool.Pool) (map[int64]lessonMeta, error) {
 	rows, err := db.Query(ctx, `
-		SELECT l.id, c.hsk_level
+		SELECT l.id, c.hsk_level, l.lesson_number
 		FROM lessons l
 		JOIN courses c ON c.id = l.course_id
 	`)
@@ -288,14 +302,14 @@ func loadLessonHSKLevels(ctx context.Context, db *pgxpool.Pool) (map[int64]int16
 	}
 	defer rows.Close()
 
-	result := make(map[int64]int16)
+	result := make(map[int64]lessonMeta)
 	for rows.Next() {
 		var id int64
-		var level int16
-		if err := rows.Scan(&id, &level); err != nil {
+		var m lessonMeta
+		if err := rows.Scan(&id, &m.HSKLevel, &m.LessonNumber); err != nil {
 			return nil, err
 		}
-		result[id] = level
+		result[id] = m
 	}
 	return result, rows.Err()
 }
