@@ -14,7 +14,7 @@ type newSentence struct {
 
 var newSentences = []newSentence{
 	{Translation: "Я тоже.", Chunks: []string{"我", "也", "是"}, Pinyin: "wǒ yě shì", HSKLevel: 1},
-	{Translation: "А ты?", Chunks: []string{"你", "呢"}, Pinyin: "nǐ ne", HSKLevel: 1},
+	{Translation: "Я иду в школу, а ты?", Chunks: []string{"我", "去", "学校", "你", "呢"}, Pinyin: "wǒ qù xué xiào nǐ ne", HSKLevel: 1},
 	{Translation: "У него нет.", Chunks: []string{"他", "没", "有"}, Pinyin: "tā méi yǒu", HSKLevel: 1},
 	{Translation: "Это моё.", Chunks: []string{"这", "是", "我", "的"}, Pinyin: "zhè shì wǒ de", HSKLevel: 1},
 	{Translation: "Что это?", Chunks: []string{"这", "是", "什么"}, Pinyin: "zhè shì shén me", HSKLevel: 1},
