@@ -1,6 +1,6 @@
 <template>
   <header
-    class="flex h-16 items-center justify-between gap-2 border-b border-white/50 bg-white/30 px-3 backdrop-blur-xl sm:px-6 dark:border-white/10 dark:bg-white/5"
+    class="flex h-16 items-center justify-between gap-2 border-b border-white/50 bg-gradient-to-r from-[var(--color-primary)]/10 via-white/30 to-white/30 px-3 shadow-sm backdrop-blur-xl sm:px-6 dark:border-white/10 dark:from-[var(--color-primary)]/10 dark:via-white/5 dark:to-white/5"
   >
     <div class="flex min-w-0 items-center gap-2">
       <button

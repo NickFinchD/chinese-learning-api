@@ -1,10 +1,10 @@
 <template>
   <div>
-    <h1 class="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
+    <h1 class="mb-2 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl dark:text-white">
       С возвращением{{ auth.user ? `, ${auth.user.username}` : '' }}
     </h1>
 
-    <p class="mb-8 text-gray-600 dark:text-gray-400">
+    <p class="mb-8 text-lg text-gray-600 dark:text-gray-400">
       Вот на чём вы остановились.
     </p>
 
