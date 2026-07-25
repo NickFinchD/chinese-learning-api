@@ -65,37 +65,40 @@
             :key="index"
             :class="segmentClass(segment)"
             @click="onSegmentClick(segment, index, $event)"
-          >
-            {{ segment.text }}
-
-            <span
-              v-if="(segment.word || segment.name) && activeIndex === index"
-              class="absolute bottom-full left-1/2 z-10 mb-2 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-normal text-white shadow-lg"
-            >
-              <span>{{ (segment.word ?? segment.name)!.pinyin }} — {{ (segment.word ?? segment.name)!.translation }}</span>
-
-              <AudioButton
-                :text="segment.text"
-                size="sm"
-                class="!text-[var(--color-mint)] hover:!bg-white/10"
-              />
-
-              <button
-                v-if="segment.word"
-                type="button"
-                class="leading-none"
-                :class="isSaved(segment.word.id) ? 'text-[var(--color-accent)]' : 'text-gray-400 hover:text-white'"
-                @click.stop="toggleSaved(segment.word)"
-              >
-                <AppIcon
-                  name="star"
-                  :size="16"
-                  :filled="isSaved(segment.word.id)"
-                />
-              </button>
-            </span>
-          </span>
+          >{{ segment.text }}</span>
         </p>
+
+        <Teleport to="body">
+          <div
+            v-if="activeSegment"
+            ref="tooltipRef"
+            class="fixed z-50 flex items-center gap-2 whitespace-nowrap rounded-lg bg-gray-900 px-3 py-2 text-sm font-normal text-white shadow-lg"
+            :style="{ top: `${tooltipPos.top}px`, left: `${tooltipPos.left}px` }"
+            @click.stop
+          >
+            <span>{{ (activeSegment.word ?? activeSegment.name)!.pinyin }} — {{ (activeSegment.word ?? activeSegment.name)!.translation }}</span>
+
+            <AudioButton
+              :text="activeSegment.text"
+              size="sm"
+              class="!text-[var(--color-mint)] hover:!bg-white/10"
+            />
+
+            <button
+              v-if="activeSegment.word"
+              type="button"
+              class="leading-none"
+              :class="isSaved(activeSegment.word.id) ? 'text-[var(--color-accent)]' : 'text-gray-400 hover:text-white'"
+              @click.stop="toggleSaved(activeSegment.word)"
+            >
+              <AppIcon
+                name="star"
+                :size="16"
+                :filled="isSaved(activeSegment.word.id)"
+              />
+            </button>
+          </div>
+        </Teleport>
 
         <div class="mb-4 flex gap-3">
           <button
@@ -141,7 +144,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 
 import { getWords } from '@/services/words'
@@ -187,8 +190,35 @@ function isSaved(wordId: number) {
 }
 
 const activeIndex = ref<number | null>(null)
+const activeSegment = computed(() => activeIndex.value !== null ? segments.value[activeIndex.value] ?? null : null)
 
-function onSegmentClick(segment: Segment, index: number, event: MouseEvent) {
+// Teleported to <body> and positioned in viewport coordinates (rather than
+// CSS-anchored to the word span) so it can never be clipped by <main>'s
+// overflow-y-auto — which, per spec, forces overflow-x to auto too, cutting
+// off anything that pokes out past main's left edge (right where the
+// sidebar sits) when a word near the margin has a long pinyin/translation.
+const tooltipRef = ref<HTMLElement | null>(null)
+const tooltipPos = ref({ top: 0, left: 0 })
+
+const TOOLTIP_MARGIN = 8
+
+function positionTooltip(anchor: HTMLElement) {
+  const rect = anchor.getBoundingClientRect()
+  const width = tooltipRef.value?.offsetWidth ?? 0
+  const height = tooltipRef.value?.offsetHeight ?? 0
+
+  const left = Math.min(
+    Math.max(TOOLTIP_MARGIN, rect.left + rect.width / 2 - width / 2),
+    window.innerWidth - width - TOOLTIP_MARGIN,
+  )
+
+  tooltipPos.value = {
+    left,
+    top: Math.max(TOOLTIP_MARGIN, rect.top - height - TOOLTIP_MARGIN),
+  }
+}
+
+async function onSegmentClick(segment: Segment, index: number, event: MouseEvent) {
   if (!segment.word && !segment.name) {
     return
   }
@@ -198,7 +228,19 @@ function onSegmentClick(segment: Segment, index: number, event: MouseEvent) {
   // still bubble up and close whatever popover is open.
   event.stopPropagation()
 
-  activeIndex.value = activeIndex.value === index ? null : index
+  if (activeIndex.value === index) {
+    activeIndex.value = null
+    return
+  }
+
+  activeIndex.value = index
+
+  await nextTick()
+  positionTooltip(event.currentTarget as HTMLElement)
+}
+
+function closeTooltip() {
+  activeIndex.value = null
 }
 
 async function toggleSaved(word: Word) {
@@ -332,11 +374,20 @@ onMounted(async () => {
   } catch (error) {
     console.error('Failed to load dictionary for hover hints:', error)
   }
+
+  // The tooltip is positioned in viewport coordinates on open and doesn't
+  // track the anchor afterwards, so close it rather than let it drift out
+  // of place if the text scrolls or the window resizes.
+  window.addEventListener('scroll', closeTooltip, true)
+  window.addEventListener('resize', closeTooltip)
 })
 
 onUnmounted(() => {
   if (isSpeechSupported()) {
     window.speechSynthesis.cancel()
   }
+
+  window.removeEventListener('scroll', closeTooltip, true)
+  window.removeEventListener('resize', closeTooltip)
 })
 </script>
