@@ -9,13 +9,16 @@ export const useGamificationStore = defineStore('gamification', {
     progress: null as GamificationProgress | null,
     achievements: [] as Achievement[],
     loading: false,
+    // Set right after `progress` jumps to a higher level, so a toast can
+    // react to it; null the rest of the time (including on first load).
+    leveledUpTo: null as number | null,
   }),
 
   actions: {
     async loadProgress() {
       const response = await getProgress()
 
-      this.progress = response.data
+      this.applyProgress(response.data)
     },
 
     async loadAchievements() {
@@ -34,10 +37,24 @@ export const useGamificationStore = defineStore('gamification', {
       try {
         const response = await sendHeartbeat()
 
-        this.progress = response.data
+        this.applyProgress(response.data)
       } catch (error) {
         console.error('Failed to send activity heartbeat:', error)
       }
+    },
+
+    applyProgress(next: GamificationProgress) {
+      const previousLevel = this.progress?.level
+
+      this.progress = next
+
+      if (previousLevel !== undefined && next.level > previousLevel) {
+        this.leveledUpTo = next.level
+      }
+    },
+
+    dismissLevelUp() {
+      this.leveledUpTo = null
     },
   },
 })

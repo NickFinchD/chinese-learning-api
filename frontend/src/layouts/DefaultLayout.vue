@@ -3,6 +3,8 @@
 
     <AppHeader @toggle-sidebar="sidebarOpen = !sidebarOpen" />
 
+    <LevelUpToast />
+
     <div class="flex flex-1 overflow-hidden">
 
       <AppSidebar
@@ -36,6 +38,7 @@ import { useGamificationStore } from '@/stores/gamification'
 
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
+import LevelUpToast from '@/components/layout/LevelUpToast.vue'
 
 const HEARTBEAT_INTERVAL_MS = 30000
 
