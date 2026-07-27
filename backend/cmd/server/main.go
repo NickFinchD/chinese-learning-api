@@ -21,6 +21,7 @@ import (
 	"github.com/NickFinchD/chinese-learning-api/internal/savedwords"
 	"github.com/NickFinchD/chinese-learning-api/internal/sentences"
 	"github.com/NickFinchD/chinese-learning-api/internal/texts"
+	"github.com/NickFinchD/chinese-learning-api/internal/users"
 	"github.com/NickFinchD/chinese-learning-api/internal/words"
 	"github.com/gin-contrib/cors"
 
@@ -67,6 +68,7 @@ func main() {
 
 	grammarRepository := grammar.NewRepository(db)
 	grammarService := grammar.NewService(grammarRepository)
+	grammarHandler := grammar.NewHandler(grammarService)
 
 	sentencesRepository := sentences.NewRepository(db)
 	sentencesService := sentences.NewService(sentencesRepository)
@@ -110,6 +112,10 @@ func main() {
 	namesRepository := names.NewRepository(db)
 	namesService := names.NewService(namesRepository)
 	namesHandler := names.NewHandler(namesService)
+
+	usersRepository := users.NewRepository(db)
+	usersService := users.NewService(usersRepository)
+	usersHandler := users.NewHandler(usersService)
 	// =========================
 	// Router
 	// =========================
@@ -165,6 +171,22 @@ func main() {
 	authorized.Use(auth.JWTMiddleware(cfg))
 
 	authorized.GET("/me", authHandler.Me)
+
+	// Admin routes: gated on top of JWTMiddleware by RequireAdmin, which
+	// re-checks is_admin against the DB on every request (see
+	// internal/auth/middleware.go). Each domain registers its admin routes
+	// on this group as admin CRUD screens are added.
+	adminGroup := authorized.Group("/admin")
+	adminGroup.Use(auth.RequireAdmin(authService))
+
+	words.RegisterAdminRoutes(adminGroup.Group("/words"), wordsHandler)
+	texts.RegisterAdminRoutes(adminGroup.Group("/texts"), textsHandler)
+	grammar.RegisterAdminRoutes(adminGroup.Group("/grammar"), grammarHandler)
+	quizzes.RegisterAdminRoutes(adminGroup.Group("/quizzes"), quizzesHandler)
+	sentences.RegisterAdminRoutes(adminGroup.Group("/sentences"), sentencesHandler)
+	courses.RegisterAdminRoutes(adminGroup.Group("/courses"), coursesHandler)
+	lessons.RegisterAdminRoutes(adminGroup.Group("/lessons"), lessonsHandler)
+	users.RegisterAdminRoutes(adminGroup.Group("/users"), usersHandler)
 
 	words.RegisterRoutes(
 		authorized.Group("/words"),

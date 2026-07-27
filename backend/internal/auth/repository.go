@@ -44,6 +44,7 @@ func (r *Repository) GetByEmail(ctx context.Context, email string) (*User, error
 			email,
 			password_hash,
 			avatar,
+			is_admin,
 			created_at,
 			updated_at
 		FROM users
@@ -58,6 +59,7 @@ func (r *Repository) GetByEmail(ctx context.Context, email string) (*User, error
 		&user.Email,
 		&user.PasswordHash,
 		&user.Avatar,
+		&user.IsAdmin,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -79,6 +81,7 @@ func (r *Repository) GetByID(ctx context.Context, id int64) (*User, error) {
 			email,
 			password_hash,
 			avatar,
+			is_admin,
 			created_at,
 			updated_at
 		FROM users
@@ -93,6 +96,7 @@ func (r *Repository) GetByID(ctx context.Context, id int64) (*User, error) {
 		&user.Email,
 		&user.PasswordHash,
 		&user.Avatar,
+		&user.IsAdmin,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -105,4 +109,24 @@ func (r *Repository) GetByID(ctx context.Context, id int64) (*User, error) {
 	}
 
 	return user, nil
+}
+
+// IsAdmin is a cheap single-column check used by RequireAdmin on every
+// admin request, so demoting an admin takes effect on their very next
+// request instead of waiting for their JWT to expire (see middleware.go).
+func (r *Repository) IsAdmin(ctx context.Context, userID int64) (bool, error) {
+	query := `SELECT is_admin FROM users WHERE id = $1`
+
+	var isAdmin bool
+
+	err := r.db.QueryRow(ctx, query, userID).Scan(&isAdmin)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return isAdmin, nil
 }

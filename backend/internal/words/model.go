@@ -11,4 +11,15 @@ type Word struct {
 	HSKLevel     int16     `db:"hsk_level" json:"hsk_level"`
 	CreatedAt    time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt    time.Time `db:"updated_at" json:"updated_at"`
+	// Examples is only populated by GetByID (word detail) and the admin
+	// create/update responses — List/AdminList/GetByIDs leave it nil so
+	// bulk word listings don't pay for an extra query per row.
+	Examples []Example `json:"examples,omitempty"`
+}
+
+type Example struct {
+	ID          int64  `db:"id" json:"id"`
+	Hanzi       string `db:"hanzi" json:"hanzi"`
+	Pinyin      string `db:"pinyin" json:"pinyin"`
+	Translation string `db:"translation" json:"translation"`
 }

@@ -9,9 +9,9 @@
 
   <div
     v-else-if="finished"
-    class="max-w-xl"
+    class="flex min-h-[70vh] items-center justify-center"
   >
-    <div class="animate-pop-in rounded-2xl border border-white/50 bg-white/30 p-8 text-center shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+    <div class="animate-pop-in w-full max-w-xl rounded-2xl border border-white/50 bg-white/30 p-8 text-center shadow-xl backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
       <div class="mb-2 flex items-center justify-center gap-2 text-2xl font-bold text-gray-900 dark:text-white">
         <AppIcon
           name="sparkles"

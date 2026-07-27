@@ -117,3 +117,119 @@ func (h *Handler) CheckAnswer(c *gin.Context) {
 		Correct: correct,
 	})
 }
+
+func (h *Handler) AdminList(c *gin.Context) {
+
+	var request AdminListRequest
+
+	if err := c.ShouldBindQuery(&request); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	quizzes, total, err := h.service.AdminList(c.Request.Context(), request)
+
+	if err != nil {
+		response.Internal(c)
+		return
+	}
+
+	page := request.Page
+	if page < 1 {
+		page = 1
+	}
+
+	limit := request.Limit
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+
+	response.JSON(c, http.StatusOK, response.Paged[AdminQuizResponse]{
+		Items: toAdminQuizResponses(quizzes),
+		Total: total,
+		Page:  page,
+		Limit: limit,
+	})
+}
+
+func (h *Handler) AdminCreate(c *gin.Context) {
+
+	var request AdminQuizRequest
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if !hasCorrectOption(request.Options) {
+		response.BadRequest(c, "at least one option must be marked correct")
+		return
+	}
+
+	quiz, err := h.service.AdminCreate(c.Request.Context(), request)
+
+	if err != nil {
+		response.Internal(c)
+		return
+	}
+
+	response.JSON(c, http.StatusCreated, toAdminQuizResponse(*quiz))
+}
+
+func (h *Handler) AdminUpdate(c *gin.Context) {
+
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+
+	if err != nil {
+		response.BadRequest(c, "invalid quiz id")
+		return
+	}
+
+	var request AdminQuizRequest
+
+	if err := c.ShouldBindJSON(&request); err != nil {
+		response.BadRequest(c, err.Error())
+		return
+	}
+
+	if !hasCorrectOption(request.Options) {
+		response.BadRequest(c, "at least one option must be marked correct")
+		return
+	}
+
+	quiz, err := h.service.AdminUpdate(c.Request.Context(), id, request)
+
+	if err != nil {
+		response.Internal(c)
+		return
+	}
+
+	response.JSON(c, http.StatusOK, toAdminQuizResponse(*quiz))
+}
+
+func (h *Handler) AdminDelete(c *gin.Context) {
+
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+
+	if err != nil {
+		response.BadRequest(c, "invalid quiz id")
+		return
+	}
+
+	if err := h.service.AdminDelete(c.Request.Context(), id); err != nil {
+		response.Internal(c)
+		return
+	}
+
+	response.JSON(c, http.StatusOK, gin.H{"success": true})
+}
+
+func hasCorrectOption(options []AdminOptionRequest) bool {
+	for _, option := range options {
+		if option.IsCorrect {
+			return true
+		}
+	}
+
+	return false
+}

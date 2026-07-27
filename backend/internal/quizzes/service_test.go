@@ -45,6 +45,22 @@ func (f *fakeRepository) CheckAnswer(ctx context.Context, quizID, optionID int64
 	return f.checkAnswerResult, f.checkAnswerErr
 }
 
+func (f *fakeRepository) AdminList(ctx context.Context, request AdminListRequest) ([]Quiz, int, error) {
+	return f.quizzes, len(f.quizzes), f.err
+}
+
+func (f *fakeRepository) AdminCreate(ctx context.Context, req AdminQuizRequest) (*Quiz, error) {
+	return f.quiz, f.err
+}
+
+func (f *fakeRepository) AdminUpdate(ctx context.Context, id int64, req AdminQuizRequest) (*Quiz, error) {
+	return f.quiz, f.err
+}
+
+func (f *fakeRepository) AdminDelete(ctx context.Context, id int64) error {
+	return f.err
+}
+
 func TestCheckAnswer_ReturnsRepositoryResult(t *testing.T) {
 
 	repo := &fakeRepository{checkAnswerResult: true}

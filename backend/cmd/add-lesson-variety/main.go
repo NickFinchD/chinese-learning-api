@@ -2,10 +2,14 @@
 // with two things, without removing or reordering any of its existing
 // steps:
 //
-//   - A "переводится → слово" (translation_to_word) quiz right after every
-//     existing "Как переводится X?" (word_to_translation) quiz, testing the
-//     same word in reverse — mirroring how each word already gets a 'word'
-//     step plus a forward quiz.
+//   - A "переводится → слово" (translation_to_word) quiz for every existing
+//     "Как переводится X?" (word_to_translation) quiz, testing the same
+//     word in reverse. All reverse quizzes for a lesson are appended as a
+//     block at the very end of the lesson (after everything else,
+//     including the sentence-builder step) rather than immediately after
+//     each forward quiz — testing a word forward and then immediately
+//     backward reads as redundant rather than reinforcing; a review batch
+//     at the end doesn't.
 //   - One sentence_builder step, for lessons numbered 3+ within their course
 //     that don't already have one (lessons 1-2 are skipped — too little
 //     vocabulary has been introduced yet for the shared exercise pool to
@@ -18,8 +22,9 @@
 //
 //	go run ./cmd/add-lesson-variety
 //
-// Idempotent: reruns skip words that already have a reverse quiz and
-// lessons that already have a sentence_builder step.
+// Idempotent: reruns skip words that already have a reverse quiz *within
+// that lesson* (not just anywhere in the DB, so lesson_steps rows are never
+// duplicated) and lessons that already have a sentence_builder step.
 package main
 
 import (
@@ -170,7 +175,22 @@ func main() {
 		// learner has already seen. Skip those early lessons.
 		eligibleForSentence := meta.LessonNumber >= 3
 
+		// A lesson may already have some (or all) of its reverse quizzes from
+		// an earlier run — track which word hanzi are already covered within
+		// *this* lesson so a rerun doesn't add duplicate reverse-quiz steps
+		// next to the ones already there.
+		coveredHanziInLesson := map[string]bool{}
+		for _, s := range original {
+			if s.StepType != "quiz" {
+				continue
+			}
+			if quiz, ok := quizByID[s.EntityID]; ok && quiz.Direction == directionTranslationToWord && quiz.Hanzi != nil {
+				coveredHanziInLesson[*quiz.Hanzi] = true
+			}
+		}
+
 		planned := make([]newStep, 0, len(original)+len(original)/2+1)
+		pendingReverse := make([]newStep, 0)
 		changed := false
 
 		for i, s := range original {
@@ -197,7 +217,7 @@ func main() {
 			}
 
 			w, ok := wordByHanzi[*quiz.Hanzi]
-			if !ok {
+			if !ok || coveredHanziInLesson[w.Hanzi] {
 				continue
 			}
 
@@ -218,7 +238,8 @@ func main() {
 				reverseQuizByHanzi[w.Hanzi] = reverseID
 			}
 
-			planned = append(planned, newStep{StepType: "quiz", EntityID: reverseID})
+			coveredHanziInLesson[w.Hanzi] = true
+			pendingReverse = append(pendingReverse, newStep{StepType: "quiz", EntityID: reverseID})
 			reverseQuizzesAdded++
 			changed = true
 		}
@@ -232,6 +253,8 @@ func main() {
 			sentenceStepsAdded++
 			changed = true
 		}
+
+		planned = append(planned, pendingReverse...)
 
 		if !changed {
 			continue

@@ -8,6 +8,7 @@ type User struct {
 	Email        string    `db:"email"`
 	PasswordHash string    `db:"password_hash"`
 	Avatar       *string   `db:"avatar"`
+	IsAdmin      bool      `db:"is_admin"`
 	CreatedAt    time.Time `db:"created_at"`
 	UpdatedAt    time.Time `db:"updated_at"`
 }

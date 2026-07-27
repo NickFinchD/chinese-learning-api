@@ -19,6 +19,7 @@ import GrammarTestPage from '@/pages/GrammarTestPage.vue'
 import WordTrainingPage from '@/pages/WordTrainingPage.vue'
 import SentenceTestPage from '@/pages/SentenceTestPage.vue'
 import MockExamPage from '@/pages/MockExamPage.vue'
+import FlashcardsPage from '@/pages/FlashcardsPage.vue'
 
 import TextsPage from '@/pages/TextsPage.vue'
 import TextPage from '@/pages/TextPage.vue'
@@ -135,6 +136,11 @@ const router = createRouter({
     component: SentenceTestPage,
   },
   {
+    path: 'tests/flashcards',
+    name: 'flashcards',
+    component: FlashcardsPage,
+  },
+  {
     path: 'tests/mock-exam',
     name: 'mock-exam',
     component: MockExamPage,
@@ -153,6 +159,90 @@ const router = createRouter({
     path: 'settings',
     name: 'settings',
     component: SettingsPage,
+  },
+  {
+    // Admin screens are lazy-loaded (dynamic import), unlike every other
+    // route above, so their code isn't shipped to regular users' bundle.
+    // The real access control is server-side (RequireAdmin on the API) —
+    // this guard is UX only, see router.beforeEach below.
+    path: 'admin',
+    name: 'admin',
+    component: () => import('@/pages/admin/AdminHomePage.vue'),
+    meta: {
+      requiresAdmin: true,
+    },
+  },
+  {
+    path: 'admin/words',
+    name: 'admin-words',
+    component: () => import('@/pages/admin/AdminWordsPage.vue'),
+    meta: {
+      requiresAdmin: true,
+    },
+  },
+  {
+    path: 'admin/texts',
+    name: 'admin-texts',
+    component: () => import('@/pages/admin/AdminTextsPage.vue'),
+    meta: {
+      requiresAdmin: true,
+    },
+  },
+  {
+    path: 'admin/grammar',
+    name: 'admin-grammar',
+    component: () => import('@/pages/admin/AdminGrammarPage.vue'),
+    meta: {
+      requiresAdmin: true,
+    },
+  },
+  {
+    path: 'admin/quizzes',
+    name: 'admin-quizzes',
+    component: () => import('@/pages/admin/AdminQuizzesPage.vue'),
+    meta: {
+      requiresAdmin: true,
+    },
+  },
+  {
+    path: 'admin/sentences',
+    name: 'admin-sentences',
+    component: () => import('@/pages/admin/AdminSentencesPage.vue'),
+    meta: {
+      requiresAdmin: true,
+    },
+  },
+  {
+    path: 'admin/courses',
+    name: 'admin-courses',
+    component: () => import('@/pages/admin/AdminCoursesPage.vue'),
+    meta: {
+      requiresAdmin: true,
+    },
+  },
+  {
+    path: 'admin/courses/:id',
+    name: 'admin-course',
+    component: () => import('@/pages/admin/AdminCoursePage.vue'),
+    meta: {
+      requiresAdmin: true,
+    },
+  },
+  {
+    path: 'admin/lessons/:id',
+    name: 'admin-lesson',
+    component: () => import('@/pages/admin/AdminLessonPage.vue'),
+    meta: {
+      requiresAdmin: true,
+    },
+  },
+  {
+    path: 'admin/users',
+    name: 'admin-users',
+    component: () => import('@/pages/admin/AdminUsersPage.vue'),
+    meta: {
+      requiresAdmin: true,
+    },
   },
 ],
     },
@@ -177,12 +267,17 @@ router.beforeEach(async (to) => {
 
   const requiresAuth = to.matched.some(route => route.meta.requiresAuth)
   const guestOnly = to.matched.some(route => route.meta.guest)
+  const requiresAdmin = to.matched.some(route => route.meta.requiresAdmin)
 
   if (requiresAuth && !auth.isAuthenticated) {
     return { name: 'login' }
   }
 
   if (guestOnly && auth.isAuthenticated) {
+    return { name: 'home' }
+  }
+
+  if (requiresAdmin && !auth.user?.is_admin) {
     return { name: 'home' }
   }
 })

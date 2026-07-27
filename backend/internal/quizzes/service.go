@@ -9,6 +9,10 @@ type repository interface {
 	GetByID(ctx context.Context, id int64) (*Quiz, error)
 	Create(ctx context.Context, quiz Quiz) (*Quiz, error)
 	CheckAnswer(ctx context.Context, quizID, optionID int64) (bool, error)
+	AdminList(ctx context.Context, request AdminListRequest) ([]Quiz, int, error)
+	AdminCreate(ctx context.Context, req AdminQuizRequest) (*Quiz, error)
+	AdminUpdate(ctx context.Context, id int64, req AdminQuizRequest) (*Quiz, error)
+	AdminDelete(ctx context.Context, id int64) error
 }
 
 type Service struct {
@@ -41,4 +45,20 @@ func (s *Service) Create(ctx context.Context, quiz Quiz) (*Quiz, error) {
 }
 func (s *Service) CheckAnswer(ctx context.Context, quizID, optionID int64) (bool, error) {
 	return s.repository.CheckAnswer(ctx, quizID, optionID)
+}
+
+func (s *Service) AdminList(ctx context.Context, request AdminListRequest) ([]Quiz, int, error) {
+	return s.repository.AdminList(ctx, request)
+}
+
+func (s *Service) AdminCreate(ctx context.Context, req AdminQuizRequest) (*Quiz, error) {
+	return s.repository.AdminCreate(ctx, req)
+}
+
+func (s *Service) AdminUpdate(ctx context.Context, id int64, req AdminQuizRequest) (*Quiz, error) {
+	return s.repository.AdminUpdate(ctx, id, req)
+}
+
+func (s *Service) AdminDelete(ctx context.Context, id int64) error {
+	return s.repository.AdminDelete(ctx, id)
 }

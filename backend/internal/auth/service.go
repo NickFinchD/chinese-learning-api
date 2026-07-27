@@ -14,6 +14,7 @@ type repository interface {
 	Create(ctx context.Context, user *User) error
 	GetByEmail(ctx context.Context, email string) (*User, error)
 	GetByID(ctx context.Context, id int64) (*User, error)
+	IsAdmin(ctx context.Context, userID int64) (bool, error)
 }
 
 type Service struct {
@@ -98,4 +99,8 @@ func (s *Service) Me(ctx context.Context, userID int64) (*User, error) {
 	}
 
 	return user, nil
+}
+
+func (s *Service) IsAdmin(ctx context.Context, userID int64) (bool, error) {
+	return s.repository.IsAdmin(ctx, userID)
 }

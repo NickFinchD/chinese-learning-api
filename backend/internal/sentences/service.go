@@ -6,6 +6,10 @@ type repository interface {
 	List(ctx context.Context, hskLevel int16) ([]Exercise, error)
 	GetByID(ctx context.Context, id int64) (*Exercise, error)
 	GetByIDs(ctx context.Context, ids []int64) ([]Exercise, error)
+	AdminList(ctx context.Context, request AdminListRequest) ([]Exercise, int, error)
+	Create(ctx context.Context, req AdminExerciseRequest) (*Exercise, error)
+	Update(ctx context.Context, id int64, req AdminExerciseRequest) (*Exercise, error)
+	Delete(ctx context.Context, id int64) error
 }
 
 type Service struct {
@@ -46,4 +50,20 @@ func (s *Service) CheckAnswer(ctx context.Context, exerciseID int64, orderedChun
 	}
 
 	return true, nil
+}
+
+func (s *Service) AdminList(ctx context.Context, request AdminListRequest) ([]Exercise, int, error) {
+	return s.repository.AdminList(ctx, request)
+}
+
+func (s *Service) Create(ctx context.Context, req AdminExerciseRequest) (*Exercise, error) {
+	return s.repository.Create(ctx, req)
+}
+
+func (s *Service) Update(ctx context.Context, id int64, req AdminExerciseRequest) (*Exercise, error) {
+	return s.repository.Update(ctx, id, req)
+}
+
+func (s *Service) Delete(ctx context.Context, id int64) error {
+	return s.repository.Delete(ctx, id)
 }

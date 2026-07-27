@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -324,6 +325,192 @@ func (r *Repository) Create(ctx context.Context, quiz Quiz) (*Quiz, error) {
 
 	return &quiz, nil
 }
+// AdminList is independent of GetAll: it paginates, supports search/hsk
+// filtering, and orders newest-first so new content is easy to find.
+func (r *Repository) AdminList(ctx context.Context, request AdminListRequest) ([]Quiz, int, error) {
+
+	page := request.Page
+	if page < 1 {
+		page = 1
+	}
+
+	limit := request.Limit
+	if limit < 1 || limit > 100 {
+		limit = 20
+	}
+
+	where := `WHERE 1=1`
+	args := []interface{}{}
+	arg := 1
+
+	if request.Search != "" {
+		where += `
+			AND (
+				question ILIKE $` + strconv.Itoa(arg) + `
+				OR hanzi ILIKE $` + strconv.Itoa(arg) + `
+			)
+		`
+
+		args = append(args, "%"+request.Search+"%")
+		arg++
+	}
+
+	if request.HSK > 0 {
+		where += ` AND hsk_level = $` + strconv.Itoa(arg)
+
+		args = append(args, request.HSK)
+		arg++
+	}
+
+	var total int
+
+	if err := r.db.QueryRow(ctx, `SELECT COUNT(*) FROM quizzes `+where, args...).Scan(&total); err != nil {
+		return nil, 0, err
+	}
+
+	query := `
+		SELECT id, question, hsk_level, direction, hanzi, pinyin, created_at, updated_at
+		FROM quizzes
+	` + where + `
+		ORDER BY id DESC
+		LIMIT $` + strconv.Itoa(arg) + ` OFFSET $` + strconv.Itoa(arg+1)
+
+	args = append(args, limit, (page-1)*limit)
+
+	rows, err := r.db.Query(ctx, query, args...)
+
+	if err != nil {
+		return nil, 0, err
+	}
+
+	defer rows.Close()
+
+	quizzes := make([]Quiz, 0)
+
+	for rows.Next() {
+
+		var quiz Quiz
+
+		if err := rows.Scan(
+			&quiz.ID,
+			&quiz.Question,
+			&quiz.HSKLevel,
+			&quiz.Direction,
+			&quiz.Hanzi,
+			&quiz.Pinyin,
+			&quiz.CreatedAt,
+			&quiz.UpdatedAt,
+		); err != nil {
+			return nil, 0, err
+		}
+
+		quizzes = append(quizzes, quiz)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, 0, err
+	}
+
+	if err := r.loadOptions(ctx, quizzes); err != nil {
+		return nil, 0, err
+	}
+
+	return quizzes, total, nil
+}
+
+func (r *Repository) AdminCreate(ctx context.Context, req AdminQuizRequest) (*Quiz, error) {
+
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	quiz := Quiz{}
+
+	err = tx.QueryRow(ctx, `
+		INSERT INTO quizzes (question, hsk_level, direction, hanzi, pinyin)
+		VALUES ($1, $2, $3, NULLIF($4, ''), NULLIF($5, ''))
+		RETURNING id, question, hsk_level, direction, hanzi, pinyin, created_at, updated_at
+	`, req.Question, req.HSKLevel, req.Direction, req.Hanzi, req.Pinyin).Scan(
+		&quiz.ID, &quiz.Question, &quiz.HSKLevel, &quiz.Direction, &quiz.Hanzi, &quiz.Pinyin,
+		&quiz.CreatedAt, &quiz.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err := insertOptions(ctx, tx, quiz.ID, req.Options); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+
+	return r.GetByID(ctx, quiz.ID)
+}
+
+// AdminUpdate replaces a quiz's options wholesale (delete then reinsert)
+// rather than diffing — the simplest correct approach at this scale, and
+// consistent since edits happen one quiz at a time through the admin UI.
+func (r *Repository) AdminUpdate(ctx context.Context, id int64, req AdminQuizRequest) (*Quiz, error) {
+
+	tx, err := r.db.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+
+	_, err = tx.Exec(ctx, `
+		UPDATE quizzes
+		SET question = $1, hsk_level = $2, direction = $3, hanzi = NULLIF($4, ''), pinyin = NULLIF($5, ''), updated_at = now()
+		WHERE id = $6
+	`, req.Question, req.HSKLevel, req.Direction, req.Hanzi, req.Pinyin, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := tx.Exec(ctx, `DELETE FROM quiz_options WHERE quiz_id = $1`, id); err != nil {
+		return nil, err
+	}
+
+	if err := insertOptions(ctx, tx, id, req.Options); err != nil {
+		return nil, err
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, err
+	}
+
+	return r.GetByID(ctx, id)
+}
+
+func insertOptions(ctx context.Context, tx pgx.Tx, quizID int64, options []AdminOptionRequest) error {
+
+	for i, option := range options {
+
+		_, err := tx.Exec(ctx, `
+			INSERT INTO quiz_options (quiz_id, option_text, pinyin, is_correct, sort_order)
+			VALUES ($1, $2, NULLIF($3, ''), $4, $5)
+		`, quizID, option.Text, option.Pinyin, option.IsCorrect, i+1)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (r *Repository) AdminDelete(ctx context.Context, id int64) error {
+	// quiz_options rows cascade-delete via their FK (ON DELETE CASCADE).
+	_, err := r.db.Exec(ctx, `DELETE FROM quizzes WHERE id = $1`, id)
+	return err
+}
+
 func (r *Repository) CheckAnswer(ctx context.Context, quizID, optionID int64) (bool, error) {
 	var correct bool
 

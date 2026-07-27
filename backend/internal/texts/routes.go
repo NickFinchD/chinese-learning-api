@@ -8,3 +8,10 @@ func RegisterRoutes(router *gin.RouterGroup, handler *Handler) {
 	router.POST("/:id/read", handler.MarkRead)
 	router.DELETE("/:id/read", handler.MarkUnread)
 }
+
+func RegisterAdminRoutes(router *gin.RouterGroup, handler *Handler) {
+	router.GET("", handler.AdminList)
+	router.POST("", handler.AdminCreate)
+	router.PUT("/:id", handler.AdminUpdate)
+	router.DELETE("/:id", handler.AdminDelete)
+}

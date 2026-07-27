@@ -76,6 +76,42 @@
       </div>
 
       <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
+        Фон
+      </h2>
+
+      <div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <button
+          v-for="(backgroundOption, id) in BACKGROUNDS"
+          :key="id"
+          type="button"
+          class="rounded-xl border p-3 text-left transition"
+          :class="background.backgroundId === id
+            ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10'
+            : 'border-white/50 bg-white/20 hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10'"
+          @click="background.setBackground(id as BackgroundId)"
+        >
+          <div class="mb-2 h-16 overflow-hidden rounded-lg">
+            <img
+              :src="backgroundOption.day"
+              alt=""
+              class="h-full w-full object-cover"
+            >
+          </div>
+
+          <div class="flex min-w-0 items-center gap-1.5 text-sm font-medium text-gray-800 dark:text-gray-200">
+            <AppIcon
+              v-if="background.backgroundId === id"
+              name="check-circle"
+              :size="14"
+              filled
+              class="shrink-0 text-[var(--color-primary)]"
+            />
+            <span class="truncate">{{ backgroundOption.label }}</span>
+          </div>
+        </button>
+      </div>
+
+      <h2 class="mb-4 text-xl font-semibold text-gray-900 dark:text-white">
         Китайский шрифт
       </h2>
 
@@ -105,6 +141,8 @@ import { HANZI_FONT_OPTIONS, useFontsStore } from '@/stores/fonts'
 import type { HanziFont } from '@/stores/fonts'
 import { PALETTES, usePaletteStore } from '@/stores/palette'
 import type { PaletteId } from '@/stores/palette'
+import { BACKGROUNDS, useBackgroundStore } from '@/stores/background'
+import type { BackgroundId } from '@/stores/background'
 
 import BaseCard from '@/components/base/BaseCard.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
@@ -115,6 +153,7 @@ import AppIcon from '@/components/base/AppIcon.vue'
 const auth = useAuthStore()
 const fonts = useFontsStore()
 const palette = usePaletteStore()
+const background = useBackgroundStore()
 
 async function onLogout() {
   try {

@@ -69,6 +69,19 @@
           Собери предложение из иероглифов по переводу.
         </p>
       </RouterLink>
+
+      <RouterLink
+        to="/app/tests/flashcards"
+        class="block rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl transition hover:shadow-md dark:border-white/10 dark:bg-white/5"
+      >
+        <h2 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
+          Карточки
+        </h2>
+
+        <p class="text-gray-600 dark:text-gray-400">
+          Повторение слов «в изучении»: знаю / не знаю.
+        </p>
+      </RouterLink>
     </div>
   </div>
 </template>

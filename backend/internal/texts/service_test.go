@@ -42,6 +42,22 @@ func (f *fakeRepository) MarkUnread(ctx context.Context, userID, textID int64) e
 	return f.err
 }
 
+func (f *fakeRepository) AdminList(ctx context.Context, request AdminListRequest) ([]Text, int, error) {
+	return f.texts, len(f.texts), f.err
+}
+
+func (f *fakeRepository) Create(ctx context.Context, req CreateTextRequest) (*Text, error) {
+	return f.text, f.err
+}
+
+func (f *fakeRepository) Update(ctx context.Context, id int64, req UpdateTextRequest) (*Text, error) {
+	return f.text, f.err
+}
+
+func (f *fakeRepository) Delete(ctx context.Context, id int64) error {
+	return f.err
+}
+
 func TestList_PassesHSKLevelThrough(t *testing.T) {
 
 	repo := &fakeRepository{texts: []Text{{ID: 1, Title: "Test"}}}

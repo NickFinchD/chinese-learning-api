@@ -128,9 +128,25 @@ VITE_API_URL=http://localhost:8080/api/v1
 - `GET /learning/`, `GET /learning/learned`, `GET /learning/in-progress`, `POST /learning/:id/answer`
 - `GET /texts/` (опционально `?hsk=N`), `GET /texts/:id`
 
+### Админка
+
+Доступ к `/admin/...` даёт колонка `users.is_admin` (миграция `000046`) — без отдельной таблицы ролей, просто булев флаг. Middleware `auth.RequireAdmin` проверяет его по БД на каждый запрос (не через JWT-claim), поэтому отзыв прав действует немедленно, а не только после истечения токена.
+
+Первого админа и любых следующих — только через CLI, self-service ручки нет:
+
+```bash
+cd backend
+go run ./cmd/promote-admin -email you@example.com
+go run ./cmd/promote-admin -email you@example.com -revoke
+```
+
+После первого админа права можно выдавать другим через UI (`/app/admin/users`).
+
+Все admin-роуты зарегистрированы на `adminGroup` в `cmd/server/main.go` (`words.RegisterAdminRoutes(adminGroup.Group("/words"), ...)` и т.д. для `texts`, `grammar`, `quizzes`, `sentences`, `courses`, `lessons`, `users`) — реальная защита на уровне API; страница `/app/admin` во фронтенде лениво подгружается (`import()`) и скрыта гвардом в роутере, но это только UX, не граница безопасности.
+
 ### Миграции
 
-19 миграций в `backend/migrations`. Основная схема: `users` → `courses` → `lessons` → `lesson_steps` → `words` → `saved_words` → `user_lesson_progress` → `quizzes` (+ `hsk_level`) → `user_course_progress` → `word_learning_progress` → `texts` (+ сид 10 текстов). Таблица `user_word_progress` (использовалась только удалённым модулем `review`) удалена.
+46 миграций в `backend/migrations`. Основная схема: `users` → `courses` → `lessons` → `lesson_steps` → `words` → `saved_words` → `user_lesson_progress` → `quizzes` (+ `hsk_level`) → `user_course_progress` → `word_learning_progress` → `texts` (+ сид 10 текстов). Таблица `user_word_progress` (использовалась только удалённым модулем `review`) удалена.
 
 ### Тесты
 

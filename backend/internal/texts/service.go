@@ -8,6 +8,10 @@ type repository interface {
 	MarkStarted(ctx context.Context, userID, textID int64) error
 	MarkRead(ctx context.Context, userID, textID int64) error
 	MarkUnread(ctx context.Context, userID, textID int64) error
+	AdminList(ctx context.Context, request AdminListRequest) ([]Text, int, error)
+	Create(ctx context.Context, req CreateTextRequest) (*Text, error)
+	Update(ctx context.Context, id int64, req UpdateTextRequest) (*Text, error)
+	Delete(ctx context.Context, id int64) error
 }
 
 type Service struct {
@@ -41,4 +45,20 @@ func (s *Service) MarkRead(ctx context.Context, userID, textID int64) error {
 
 func (s *Service) MarkUnread(ctx context.Context, userID, textID int64) error {
 	return s.repository.MarkUnread(ctx, userID, textID)
+}
+
+func (s *Service) AdminList(ctx context.Context, request AdminListRequest) ([]Text, int, error) {
+	return s.repository.AdminList(ctx, request)
+}
+
+func (s *Service) Create(ctx context.Context, req CreateTextRequest) (*Text, error) {
+	return s.repository.Create(ctx, req)
+}
+
+func (s *Service) Update(ctx context.Context, id int64, req UpdateTextRequest) (*Text, error) {
+	return s.repository.Update(ctx, id, req)
+}
+
+func (s *Service) Delete(ctx context.Context, id int64) error {
+	return s.repository.Delete(ctx, id)
 }

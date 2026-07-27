@@ -1,7 +1,7 @@
 import { api } from './client'
 
 import type { ApiResponse } from '@/types/api'
-import type { Word } from '@/types/word'
+import type { Word, WordDetail } from '@/types/word'
 
 export interface ListWordsParams {
   search?: string
@@ -15,6 +15,12 @@ export async function getWords(params: ListWordsParams = {}) {
       hsk: params.hsk || undefined,
     },
   })
+
+  return response.data
+}
+
+export async function getWord(id: number) {
+  const response = await api.get<ApiResponse<WordDetail>>(`/words/${id}`)
 
   return response.data
 }

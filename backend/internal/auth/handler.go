@@ -42,6 +42,7 @@ func (h *Handler) Register(c *gin.Context) {
 		ID:       user.ID,
 		Username: user.Username,
 		Email:    user.Email,
+		IsAdmin:  user.IsAdmin,
 	})
 }
 func (h *Handler) Login(c *gin.Context) {
@@ -74,6 +75,7 @@ func (h *Handler) Login(c *gin.Context) {
 		ID:       result.User.ID,
 		Username: result.User.Username,
 		Email:    result.User.Email,
+		IsAdmin:  result.User.IsAdmin,
 	})
 }
 func (h *Handler) Me(c *gin.Context) {
@@ -96,6 +98,7 @@ func (h *Handler) Me(c *gin.Context) {
 		ID:       user.ID,
 		Username: user.Username,
 		Email:    user.Email,
+		IsAdmin:  user.IsAdmin,
 	})
 }
 func (h *Handler) Logout(c *gin.Context) {

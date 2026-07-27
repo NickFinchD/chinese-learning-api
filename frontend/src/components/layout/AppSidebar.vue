@@ -88,12 +88,27 @@
         Настройки
       </RouterLink>
 
+      <RouterLink
+        v-if="auth.user?.is_admin"
+        to="/app/admin"
+        class="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 transition hover:bg-white/50 dark:text-gray-300 dark:hover:bg-white/10"
+        active-class="bg-[var(--color-primary)]/15 text-[var(--color-primary)] font-semibold dark:bg-[var(--color-primary)]/20 dark:text-[var(--color-mint)]"
+        @click="$emit('close')"
+      >
+        <AppIcon name="lock" />
+        Админка
+      </RouterLink>
+
     </nav>
   </aside>
 </template>
 
 <script setup lang="ts">
+import { useAuthStore } from '@/stores/auth'
+
 import AppIcon from '@/components/base/AppIcon.vue'
+
+const auth = useAuthStore()
 
 defineProps<{
   open: boolean

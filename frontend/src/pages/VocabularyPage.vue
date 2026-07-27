@@ -236,8 +236,9 @@
         <div
           v-for="(word, index) in learning.inProgressWords"
           :key="word.word_id"
-          class="animate-fade-in-up rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-white/5"
+          class="animate-fade-in-up cursor-pointer rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-white/5"
           :style="{ animationDelay: `${Math.min(index * 40, 300)}ms` }"
+          @click="detailWordId = word.word_id"
         >
           <div class="mb-2 flex items-center gap-2">
             <div class="font-hanzi text-2xl font-semibold text-gray-900 dark:text-white">
@@ -300,13 +301,14 @@
         <div
           v-for="(word, index) in visibleWords"
           :key="word.id"
-          class="animate-fade-in-up relative rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-white/5"
+          class="animate-fade-in-up relative cursor-pointer rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-white/5"
           :style="{ animationDelay: `${Math.min(index * 40, 300)}ms` }"
+          @click="detailWordId = word.id"
         >
           <button
             class="absolute right-4 top-4 leading-none"
             :class="isSaved(word.id) ? 'text-[var(--color-accent)]' : 'text-gray-300 hover:text-gray-400 dark:text-gray-600 dark:hover:text-gray-400'"
-            @click="toggleSaved(word)"
+            @click.stop="toggleSaved(word)"
           >
             <AppIcon
               name="star"
@@ -395,7 +397,7 @@
             v-if="tab === 'saved' && !isLearned(word.id)"
             type="button"
             class="mt-3 flex w-full items-center justify-center gap-1.5 rounded-full border border-white/50 bg-white/20 px-3 py-1.5 text-sm text-gray-600 backdrop-blur-md transition hover:bg-white/40 dark:border-white/10 dark:bg-white/5 dark:text-gray-300 dark:hover:bg-white/10"
-            @click="onMarkLearned(word)"
+            @click.stop="onMarkLearned(word)"
           >
             <AppIcon
               name="check"
@@ -417,6 +419,11 @@
         </div>
       </div>
     </template>
+
+    <WordDetailModal
+      :word-id="detailWordId"
+      @close="detailWordId = null"
+    />
   </div>
 </template>
 
@@ -434,6 +441,7 @@ import BaseSelect from '@/components/base/BaseSelect.vue'
 import AppIcon from '@/components/base/AppIcon.vue'
 import AudioButton from '@/components/base/AudioButton.vue'
 import BaseSpinner from '@/components/base/BaseSpinner.vue'
+import WordDetailModal from '@/components/word/WordDetailModal.vue'
 
 import type { Word } from '@/types/word'
 
@@ -446,6 +454,7 @@ const learning = useLearningStore()
 const collections = useCollectionsStore()
 
 const openMenuWordId = ref<number | null>(null)
+const detailWordId = ref<number | null>(null)
 const newCollectionName = ref('')
 const newCollectionListName = ref('')
 

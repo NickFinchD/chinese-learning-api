@@ -20,6 +20,9 @@ type fakeRepository struct {
 	createErr     error
 	createCalled  bool
 	createdUser   *User
+
+	isAdminResult bool
+	isAdminErr    error
 }
 
 func (f *fakeRepository) Create(ctx context.Context, user *User) error {
@@ -41,6 +44,10 @@ func (f *fakeRepository) GetByEmail(ctx context.Context, email string) (*User, e
 
 func (f *fakeRepository) GetByID(ctx context.Context, id int64) (*User, error) {
 	return f.getByIDUser, f.getByIDErr
+}
+
+func (f *fakeRepository) IsAdmin(ctx context.Context, userID int64) (bool, error) {
+	return f.isAdminResult, f.isAdminErr
 }
 
 func testConfig() *config.Config {
