@@ -72,16 +72,25 @@
 
       <span
         v-if="!result"
-        class="font-hanzi mt-1 block text-base font-normal text-gray-500 dark:text-gray-400"
+        class="font-hanzi mt-1 flex items-center gap-2 text-base font-normal text-gray-500 dark:text-gray-400"
       >
         Правильно: {{ exercise.chunks.join('') }}
+        <AudioButton
+          :text="exercise.chunks.join('')"
+          size="sm"
+        />
       </span>
 
       <span
         v-if="exercise.pinyin"
-        class="mt-1 block text-base font-normal text-gray-500 dark:text-gray-400"
+        class="mt-1 flex items-center gap-2 text-base font-normal text-gray-500 dark:text-gray-400"
       >
         {{ exercise.pinyin }}
+        <AudioButton
+          v-if="result"
+          :text="exercise.chunks.join('')"
+          size="sm"
+        />
       </span>
     </div>
 
@@ -109,6 +118,7 @@ import { ref } from 'vue'
 
 import type { SentenceExercise } from '@/types/lesson'
 import AppIcon from '@/components/base/AppIcon.vue'
+import AudioButton from '@/components/base/AudioButton.vue'
 
 interface Chunk {
   text: string

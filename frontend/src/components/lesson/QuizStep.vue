@@ -26,6 +26,10 @@
             v-if="option.pinyin"
             class="ml-2 text-sm text-gray-500 dark:text-gray-400"
           >{{ option.pinyin }}</span>
+          <AudioButton
+            :text="option.text"
+            size="sm"
+          />
         </template>
 
         <template v-else>
