@@ -87,9 +87,16 @@
         v-for="(text, index) in filteredTexts"
         :key="text.id"
         :to="{ name: 'text', params: { id: text.id } }"
-        class="animate-fade-in-up flex h-40 flex-col rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-white/5"
+        class="animate-fade-in-up flex flex-col rounded-xl border border-white/50 bg-white/30 p-6 shadow-sm backdrop-blur-xl transition hover:-translate-y-0.5 hover:shadow-md dark:border-white/10 dark:bg-white/5"
         :style="{ animationDelay: `${Math.min(index * 40, 300)}ms` }"
       >
+        <img
+          v-if="text.image_url"
+          :src="text.image_url"
+          alt=""
+          class="mb-3 h-28 w-full rounded-lg object-cover"
+        >
+
         <div class="mb-2 flex items-start justify-between gap-2">
           <h2 class="line-clamp-2 text-lg font-semibold text-gray-900 dark:text-white">
             {{ text.title }}

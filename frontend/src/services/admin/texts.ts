@@ -10,6 +10,7 @@ export interface TextPayload {
   pinyin: string
   translation: string
   hsk_level: number
+  image_url: string
 }
 
 export async function adminListTexts(params: AdminListParams) {
@@ -32,4 +33,15 @@ export async function updateText(id: number, payload: TextPayload) {
 
 export async function deleteText(id: number) {
   await api.delete(`/admin/texts/${id}`)
+}
+
+export async function uploadTextImage(file: File) {
+  const formData = new FormData()
+  formData.append('image', file)
+
+  const response = await api.post<ApiResponse<{ url: string }>>('/admin/texts/upload-image', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+
+  return response.data
 }

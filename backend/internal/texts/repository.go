@@ -21,7 +21,7 @@ func (r *Repository) List(ctx context.Context, hskLevel int16, userID int64) ([]
 
 	query := `
 		SELECT
-			t.id, t.title, t.hanzi, t.pinyin, t.translation, t.hsk_level,
+			t.id, t.title, t.hanzi, t.pinyin, t.translation, t.hsk_level, t.image_url,
 			COALESCE(utp.status, 'not_started') AS status,
 			t.created_at, t.updated_at
 		FROM texts t
@@ -56,6 +56,7 @@ func (r *Repository) List(ctx context.Context, hskLevel int16, userID int64) ([]
 			&t.Pinyin,
 			&t.Translation,
 			&t.HSKLevel,
+			&t.ImageURL,
 			&t.Status,
 			&t.CreatedAt,
 			&t.UpdatedAt,
@@ -75,7 +76,7 @@ func (r *Repository) GetByID(ctx context.Context, id int64, userID int64) (*Text
 
 	err := r.db.QueryRow(ctx, `
 		SELECT
-			t.id, t.title, t.hanzi, t.pinyin, t.translation, t.hsk_level,
+			t.id, t.title, t.hanzi, t.pinyin, t.translation, t.hsk_level, t.image_url,
 			COALESCE(utp.status, 'not_started') AS status,
 			t.created_at, t.updated_at
 		FROM texts t
@@ -88,6 +89,7 @@ func (r *Repository) GetByID(ctx context.Context, id int64, userID int64) (*Text
 		&t.Pinyin,
 		&t.Translation,
 		&t.HSKLevel,
+		&t.ImageURL,
 		&t.Status,
 		&t.CreatedAt,
 		&t.UpdatedAt,
@@ -183,7 +185,7 @@ func (r *Repository) AdminList(ctx context.Context, request AdminListRequest) ([
 	}
 
 	query := `
-		SELECT id, title, hanzi, pinyin, translation, hsk_level, '' AS status, created_at, updated_at
+		SELECT id, title, hanzi, pinyin, translation, hsk_level, image_url, '' AS status, created_at, updated_at
 		FROM texts
 	` + where + `
 		ORDER BY id DESC
@@ -212,6 +214,7 @@ func (r *Repository) AdminList(ctx context.Context, request AdminListRequest) ([
 			&t.Pinyin,
 			&t.Translation,
 			&t.HSKLevel,
+			&t.ImageURL,
 			&t.Status,
 			&t.CreatedAt,
 			&t.UpdatedAt,
@@ -234,11 +237,11 @@ func (r *Repository) Create(ctx context.Context, req CreateTextRequest) (*Text, 
 	t := &Text{}
 
 	err := r.db.QueryRow(ctx, `
-		INSERT INTO texts (title, hanzi, pinyin, translation, hsk_level)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id, title, hanzi, pinyin, translation, hsk_level, created_at, updated_at
-	`, req.Title, req.Hanzi, req.Pinyin, req.Translation, req.HSKLevel).Scan(
-		&t.ID, &t.Title, &t.Hanzi, &t.Pinyin, &t.Translation, &t.HSKLevel, &t.CreatedAt, &t.UpdatedAt,
+		INSERT INTO texts (title, hanzi, pinyin, translation, hsk_level, image_url)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, title, hanzi, pinyin, translation, hsk_level, image_url, created_at, updated_at
+	`, req.Title, req.Hanzi, req.Pinyin, req.Translation, req.HSKLevel, req.ImageURL).Scan(
+		&t.ID, &t.Title, &t.Hanzi, &t.Pinyin, &t.Translation, &t.HSKLevel, &t.ImageURL, &t.CreatedAt, &t.UpdatedAt,
 	)
 
 	if err != nil {
@@ -254,11 +257,11 @@ func (r *Repository) Update(ctx context.Context, id int64, req UpdateTextRequest
 
 	err := r.db.QueryRow(ctx, `
 		UPDATE texts
-		SET title = $1, hanzi = $2, pinyin = $3, translation = $4, hsk_level = $5, updated_at = now()
-		WHERE id = $6
-		RETURNING id, title, hanzi, pinyin, translation, hsk_level, created_at, updated_at
-	`, req.Title, req.Hanzi, req.Pinyin, req.Translation, req.HSKLevel, id).Scan(
-		&t.ID, &t.Title, &t.Hanzi, &t.Pinyin, &t.Translation, &t.HSKLevel, &t.CreatedAt, &t.UpdatedAt,
+		SET title = $1, hanzi = $2, pinyin = $3, translation = $4, hsk_level = $5, image_url = $6, updated_at = now()
+		WHERE id = $7
+		RETURNING id, title, hanzi, pinyin, translation, hsk_level, image_url, created_at, updated_at
+	`, req.Title, req.Hanzi, req.Pinyin, req.Translation, req.HSKLevel, req.ImageURL, id).Scan(
+		&t.ID, &t.Title, &t.Hanzi, &t.Pinyin, &t.Translation, &t.HSKLevel, &t.ImageURL, &t.CreatedAt, &t.UpdatedAt,
 	)
 
 	if err != nil {

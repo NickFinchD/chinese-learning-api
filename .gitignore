@@ -6,6 +6,7 @@ dist-ssr/
 .env
 
 backend/backups/
+backend/uploads/
 
 .idea/
 .vscode/settings.json

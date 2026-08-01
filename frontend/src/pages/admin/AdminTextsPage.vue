@@ -70,6 +70,36 @@
         v-model="form.hskLevel"
         :options="hskOptions"
       />
+
+      <div class="space-y-2">
+        <img
+          v-if="form.imageUrl"
+          :src="form.imageUrl"
+          alt=""
+          class="h-32 w-full rounded-lg object-cover"
+        >
+
+        <input
+          type="file"
+          accept="image/*"
+          class="block w-full text-sm text-gray-600 file:mr-3 file:rounded-full file:border-0 file:bg-white/60 file:px-4 file:py-2 file:text-sm file:font-medium file:text-gray-700 hover:file:bg-white/80 dark:text-gray-300 dark:file:bg-white/10 dark:file:text-gray-200"
+          @change="onImageSelected"
+        >
+
+        <p
+          v-if="uploadError"
+          class="text-sm text-red-600 dark:text-red-400"
+        >
+          {{ uploadError }}
+        </p>
+
+        <p
+          v-if="uploading"
+          class="text-sm text-gray-500 dark:text-gray-400"
+        >
+          Загрузка изображения...
+        </p>
+      </div>
     </AdminFormModal>
 
     <ConfirmDialog
@@ -88,6 +118,7 @@ import { onMounted, reactive, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 
 import { useAdminTextsStore } from '@/stores/admin/texts'
+import { uploadTextImage } from '@/services/admin/texts'
 import type { TextPayload } from '@/services/admin/texts'
 import type { TextItem } from '@/types/text'
 
@@ -118,12 +149,16 @@ const editingItem = ref<TextItem | null>(null)
 const deletingItem = ref<TextItem | null>(null)
 const deleting = ref(false)
 
+const uploading = ref(false)
+const uploadError = ref('')
+
 const form = reactive({
   title: '',
   hanzi: '',
   pinyin: '',
   translation: '',
   hskLevel: 1 as number,
+  imageUrl: '',
 })
 
 function resetForm() {
@@ -132,6 +167,30 @@ function resetForm() {
   form.pinyin = ''
   form.translation = ''
   form.hskLevel = 1
+  form.imageUrl = ''
+  uploadError.value = ''
+}
+
+async function onImageSelected(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+
+  if (!file) {
+    return
+  }
+
+  uploading.value = true
+  uploadError.value = ''
+
+  try {
+    const { data } = await uploadTextImage(file)
+    form.imageUrl = data.url
+  } catch {
+    uploadError.value = 'Не удалось загрузить изображение'
+  } finally {
+    uploading.value = false
+    input.value = ''
+  }
 }
 
 function openCreate() {
@@ -148,7 +207,9 @@ function openEdit(item: TextItem) {
   form.pinyin = item.pinyin
   form.translation = item.translation
   form.hskLevel = item.hsk_level
+  form.imageUrl = item.image_url
   formError.value = ''
+  uploadError.value = ''
   modalOpen.value = true
 }
 
@@ -162,6 +223,7 @@ async function onSubmit() {
     pinyin: form.pinyin,
     translation: form.translation,
     hsk_level: form.hskLevel,
+    image_url: form.imageUrl,
   }
 
   try {

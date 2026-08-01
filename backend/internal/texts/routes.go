@@ -12,6 +12,7 @@ func RegisterRoutes(router *gin.RouterGroup, handler *Handler) {
 func RegisterAdminRoutes(router *gin.RouterGroup, handler *Handler) {
 	router.GET("", handler.AdminList)
 	router.POST("", handler.AdminCreate)
+	router.POST("/upload-image", handler.AdminUploadImage)
 	router.PUT("/:id", handler.AdminUpdate)
 	router.DELETE("/:id", handler.AdminDelete)
 }

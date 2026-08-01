@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/NickFinchD/chinese-learning-api/config"
@@ -156,6 +157,15 @@ func main() {
 			"status": "ok",
 		})
 	})
+
+	// Uploaded images (text illustrations, etc.), saved by the admin CRUD
+	// handlers under ./uploads and served back at the same path they're
+	// stored under.
+	if err := os.MkdirAll("uploads/texts", 0o755); err != nil {
+		log.Fatalf("failed to create uploads directory: %v", err)
+	}
+
+	router.Static("/uploads", "./uploads")
 
 	// =========================
 	// API v1

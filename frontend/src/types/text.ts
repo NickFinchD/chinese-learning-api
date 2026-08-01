@@ -7,5 +7,6 @@ export interface TextItem {
   pinyin: string
   translation: string
   hsk_level: number
+  image_url: string
   status: TextStatus
 }

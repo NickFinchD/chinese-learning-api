@@ -23,6 +23,13 @@
       </div>
 
       <div class="rounded-2xl border border-white/50 bg-white/30 p-8 shadow-sm backdrop-blur-xl dark:border-white/10 dark:bg-white/5">
+        <img
+          v-if="texts.current.image_url"
+          :src="texts.current.image_url"
+          alt=""
+          class="mb-6 max-h-80 w-full rounded-xl object-cover"
+        >
+
         <div class="mb-6 flex flex-wrap gap-3">
           <button
             type="button"

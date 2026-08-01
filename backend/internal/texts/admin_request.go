@@ -13,6 +13,7 @@ type CreateTextRequest struct {
 	Pinyin      string `json:"pinyin" binding:"required"`
 	Translation string `json:"translation" binding:"required"`
 	HSKLevel    int16  `json:"hsk_level" binding:"required"`
+	ImageURL    string `json:"image_url"`
 }
 
 type UpdateTextRequest struct {
@@ -21,4 +22,5 @@ type UpdateTextRequest struct {
 	Pinyin      string `json:"pinyin" binding:"required"`
 	Translation string `json:"translation" binding:"required"`
 	HSKLevel    int16  `json:"hsk_level" binding:"required"`
+	ImageURL    string `json:"image_url"`
 }
